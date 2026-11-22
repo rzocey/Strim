@@ -1,0 +1,16 @@
+# Web App Template R8 & ProGuard Obfuscation Rules
+
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class com.example.webapp.MainActivity$WebAppInterface { *; }
+-keep class com.example.webapp.MainActivity { *; }
+
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn androidx.webkit.**
+
+-keep class javax.crypto.** { *; }
