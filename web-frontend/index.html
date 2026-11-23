@@ -1,612 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link href='ICON_URL_HERE' rel='icon' type='image/x-icon' />
-    <link rel="preload" as="image" href="SPLASH_LOGO_URL_HERE" fetchpriority="high">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="color-scheme" content="dark">
-    <meta name="darkreader-lock">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; frame-src 'self' https:;">
-    <title>Home</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <script>
-      (function() {
-        try {
-          var p = new URLSearchParams(window.location.search);
-          var v = p.get('view');
-          if (v && v !== 'home') {
-            document.documentElement.classList.add('page-reloading');
-          }
-        } catch (e) {}
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="page-reload-overlay">
-      <div class="dots-loader">
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </div>
-    </div>
-    <div id="top-loader"></div>
-    <nav class="glass-nav">
-      <button class="back-btn nav-back-hidden" id="global-back-btn" data-icon="back" onclick="app.goBack()"></button>
-      <button class="nav-btn active" data-icon="home" onclick="app.navigate('home')"></button>
-      <button class="nav-btn" data-icon="explore" onclick="app.navigate('explore')"></button>
-      <button class="nav-btn" data-icon="mylist" onclick="app.navigate('mylist')"></button>
-      <button class="nav-btn" id="nav-search-btn" data-icon="search" onclick="app.navigate('search')"></button>
-      <button class="nav-btn" id="nav-options-btn" data-icon="options" onclick="app.toggleOptionsSheet()"></button>
-      <button type="button" class="nav-btn nav-col-btn" id="nav-col-btn" data-icon="col-nav" onclick="app.collapseSideNav()" title="Collapse"></button>
-      <button type="button" class="nav-min-btn" id="nav-min-btn" onclick="app.restoreNav()">&#9654;</button>
-    </nav>
-    <div id="app">
-      <div id="view-home" class="view active">
-        <div class="hero-banner is-loading" id="home-hero">
-          <div class="hero-blur-bg" id="hero-blur-bg"></div>
-          <div class="hero-bg" id="hero-bg"></div>
-          <div class="hero-overlay"></div>
-          <div class="hero-content">
-            <div class="hero-title" id="hero-title"></div>
-            <div class="hero-meta" id="hero-meta"></div>
-            <div class="hero-cast" id="hero-cast"></div>
-            <div class="hero-desc" id="hero-desc"></div>
-          </div>
-          <div class="hero-bottom-bar" id="hero-bottom-bar">
-            <div class="hero-indicators" id="hero-indicators"></div>
-          </div>
-        </div>
-        <div class="home-dots-loader dots-loader" id="home-dots-loader">
-          <img src="SPLASH_LOGO_URL_HERE" alt="" class="home-loader-gif" fetchpriority="high" onload="this.classList.add('is-ready')">
-        </div>
-        <div class="content-section" id="continue-watching-section" style="display:none;">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title section-nav-title" id="home-continue-watching-title" onclick="app.navigate('history')">
-                <span>Continue Watching</span>
-                <span class="section-nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;">
-                    <path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="row-continue" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-        <div class="content-section">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title section-nav-title" onclick="app.navigate('movies')">
-                <span>Trending Movies</span>
-                <span class="section-nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;">
-                    <path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="row-trend-movies" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-        <div class="content-section">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title section-nav-title" onclick="app.navigate('shows')">
-                <span>Trending Shows</span>
-                <span class="section-nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;">
-                    <path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="row-trend-series" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-        <div class="content-section">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title">Box Office Movies</div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="row-top-movies" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-        <div class="content-section">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title">Top Rated Shows</div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="row-top-series" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-explore" class="view">
-        <div class="content-section view-padded">
-          <div class="section-header view-header-row" id="explore-hub-header">
-            <div class="view-header-col">
-              <h2 class="view-title">Explore</h2>
-            </div>
-          </div>
-          <div id="explore-hub" class="explore-hub"></div>
-          <div id="explore-catalog" class="explore-catalog" style="display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;">
-              <div class="explore-header-titles">
-                <h2 id="explore-title" class="view-title">Movies</h2>
-                <div id="explore-switch-tabs" class="explore-switch-tabs">
-                  <span id="explore-switch-tv" class="explore-switch-title" title="Shows" onclick="app.switchExploreType('tv', this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="m16 2-4 4.5L8 2" />
-                      <rect width="20" height="13" x="2" y="6.5" rx="2.5" />
-                      <path d="M6 22h12" />
-                    </svg>
-                  </span>
-                  <span id="explore-switch-movie" class="explore-switch-title" title="Movies" onclick="app.switchExploreType('movie', this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect width="20" height="20" x="2" y="2" rx="3" />
-                      <path d="M7 2v20M17 2v20M2 6h5M17 6h5M2 10h5M17 10h5M2 14h5M17 14h5M2 18h5M17 18h5" />
-                      <polygon fill="currentColor" stroke="currentColor" stroke-width="1" points="10 9 15 12 10 15" />
-                    </svg>
-                  </span>
-                  <span id="explore-switch-company" class="explore-switch-title" title="Companies" onclick="app.switchExploreType('company', this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect width="18" height="20" x="3" y="2" rx="2" />
-                      <path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z" />
-                    </svg>
-                  </span>
-                  <span id="explore-switch-person" class="explore-switch-title" title="People" onclick="app.switchExploreType('person', this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect width="18" height="18" x="3" y="3" rx="2" />
-                      <rect width="5" height="6.5" x="9.5" y="6.5" rx="2.5" />
-                      <path d="M6.5 18.5a5.5 5.5 0 0 1 11 0" />
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="filter-bar" id="explore-filter-bar"></div>
-            <div class="grid-container" id="explore-grid"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-search" class="view">
-        <div class="search-header view-padded">
-          <h2 style="margin-bottom:20px;">Discover Shows & Movies</h2>
-          <div style="display:flex;gap:10px;justify-content:center;align-items:center;max-width:460px;width:85%;margin:0 auto 10px;">
-            <button id="main-clear-btn" class="btn-primary" style="display:none;" onclick="app.clearSearch('main')">&times;</button>
-            <input type="text" class="search-input" id="search-input" placeholder="Search..." autocomplete="on" style="min-width:0;flex:1 1 auto;">
-            <button class="btn-primary btn-search-go" onclick="app.triggerSearch()" style="flex-shrink:0;">Go</button>
-            <div class="year-sort-wrap search-year-sort-wrap" id="search-year-sort-wrap" style="display:none;flex-shrink:0;">
-              <div class="year-sort-btn" id="search-year-sort-btn">
-                <button type="button" class="year-sort-half year-sort-desc" id="search-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setSearchYearSort('desc')" title="Newest Year First"></button>
-                <button type="button" class="year-sort-half year-sort-asc" id="search-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setSearchYearSort('asc')" title="Oldest Year First"></button>
-              </div>
-            </div>
-          </div>
-          <div id="search-filter-bar" class="search-filter-bar">
-            <button type="button" class="search-filter-btn active" id="sfb-all" onclick="app.setSearchFilter('all')">All</button>
-            <button type="button" class="search-filter-btn" id="sfb-movie" onclick="app.setSearchFilter('movie')">Movies</button>
-            <button type="button" class="search-filter-btn" id="sfb-tv" onclick="app.setSearchFilter('tv')">Shows</button>
-          </div>
-          <div id="search-suggestion" style="font-size:0.85rem;color:var(--text-muted);text-align:center;margin-bottom:20px;display:none;"></div>
-          <div id="search-recents" style="display:none;flex-wrap:wrap;gap:8px 16px;justify-content:center;align-items:center;max-width:520px;margin:0 auto 20px;padding:0 15px;"></div>
-          <div id="similar-search-badge-wrap" style="display:none;align-items:center;justify-content:center;gap:10px;margin:10px auto 0;max-width:85%;width:fit-content;">
-            <div style="background:#ffffff14;border:1px solid var(--glass-border);padding:6px 14px;border-radius:20px;font-size:0.83rem;color:var(--text-main);display:inline-flex;align-items:center;gap:8px;max-width:100%;text-align:center;line-height:1.35;">
-              <span id="similar-search-badge-text">Similar Shows: Title</span>
-              <button type="button" data-icon="clear-sm" onclick="app.clearSimilarSearch()" style="background:none;border:none;color:#f87171;cursor:pointer;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;line-height:0;width:13px;height:13px;flex-shrink:0;"></button>
-            </div>
-          </div>
-        </div>
-        <div class="content-section">
-          <div class="grid-container" id="search-grid"></div>
-        </div>
-      </div>
-      <div id="view-mylist" class="view">
-        <div class="content-section view-padded">
-          <div class="section-header view-header-row">
-            <div class="view-header-col">
-              <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px;">
-                <div id="mylist-title-wrap" style="display:inline-flex;align-items:baseline;gap:8px;">
-                  <h2 class="view-title" id="mylist-view-title">My List</h2>
-                  <button type="button" id="mylist-rename-btn" class="btn-rename-list" data-icon="edit-sm" onclick="app.toggleRenameListInput(true)" title="Rename List" style="display:none;"></button>
-                </div>
-                <div id="rename-list-input-wrap" class="new-list-input-wrap" style="display:none;">
-                  <input type="text" id="rename-list-name-input" class="new-list-input" placeholder="List name..." maxlength="40" onkeydown="if(event.key==='Enter')app.submitRenameList();if(event.key==='Escape')app.toggleRenameListInput(false);">
-                  <button type="button" class="btn-new-list-action save" data-icon="plus-md" onclick="app.submitRenameList()" title="Save Name"></button>
-                  <button type="button" class="btn-new-list-action cancel" onclick="app.toggleRenameListInput(false)" title="Cancel">&times;</button>
-                </div>
-              </div>
-              <button id="clear-mylist-btn" class="btn-clear-action" onclick="app.confirmClearActiveList()" title="Clear List" style="display:none;"></button>
-            </div>
-          </div>
-          <div id="mylist-hub" class="mylist-hub-grid">
-            <div class="mylist-hub-card" id="hub-card-bookmark" onclick="app.openMyListSub('bookmark')">
-              <div class="mylist-card-collage" id="hub-collage-bookmark"></div>
-              <div class="mylist-card-overlay"></div>
-              <div class="mylist-card-content">
-                <div class="mylist-card-icon" data-icon="star-hub"></div>
-                <div class="mylist-card-title">Bookmark</div>
-                <div class="mylist-card-subtitle">Save favorite shows & movies for later</div>
-              </div>
-            </div>
-            <div class="mylist-hub-card" id="hub-card-custom" onclick="app.openMyListSub('custom_hub')">
-              <div class="mylist-card-collage" id="hub-collage-custom"></div>
-              <div class="mylist-card-overlay"></div>
-              <div class="mylist-card-content">
-                <div class="mylist-card-icon" data-icon="edit-hub"></div>
-                <div class="mylist-card-title">Custom List</div>
-                <div class="mylist-card-subtitle">Build and organize custom watchlists</div>
-              </div>
-            </div>
-          </div>
-          <div id="mylist-custom-hub" style="display:none;">
-            <div class="mylist-new-list-bar">
-              <button type="button" id="btn-show-new-list" class="btn-new-list" data-icon="plus-sm" onclick="app.toggleNewListInput(true)">New List</button>
-              <div id="new-list-input-wrap" class="new-list-input-wrap" style="display:none;">
-                <input type="text" id="new-list-name-input" class="new-list-input" placeholder="New list name..." maxlength="40" onkeydown="if(event.key==='Enter')app.submitNewList();if(event.key==='Escape')app.toggleNewListInput(false);">
-                <button type="button" class="btn-new-list-action save" data-icon="plus-md" onclick="app.submitNewList()" title="Create List"></button>
-                <button type="button" class="btn-new-list-action cancel" onclick="app.toggleNewListInput(false)" title="Cancel">&times;</button>
-              </div>
-            </div>
-            <div class="mylist-custom-grid" id="mylist-custom-grid"></div>
-          </div>
-          <div id="mylist-catalog-wrap" style="display:none;">
-            <div class="grid-container" id="mylist-grid"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-markedaswatched" class="view">
-        <div class="content-section view-padded">
-          <div class="section-header view-header-row">
-            <div class="view-header-col">
-              <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px;">
-                <div style="display:inline-flex;align-items:baseline;gap:8px;">
-                  <h2 class="view-title" id="markedaswatched-view-title">Watched</h2>
-                </div>
-              </div>
-              <button id="clear-markedaswatched-btn" class="btn-clear-action" onclick="app.showCustomPrompt('markedaswatched')" title="Clear Marked"></button>
-            </div>
-          </div>
-          <div class="grid-container" id="markedaswatched-grid"></div>
-        </div>
-      </div>
-      <div id="view-history" class="view">
-        <div class="content-section view-padded">
-          <div class="section-header view-header-row">
-            <div class="view-header-col">
-              <div style="display:inline-flex;align-items:baseline;gap:8px;">
-                <h2 class="view-title" id="history-view-title">Titles</h2>
-                <span id="history-switch-title" class="explore-switch-title" title="Episodes" onclick="app.switchHistorySub()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 2v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V2M3 22v-1a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v1" />
-                    <rect width="18" height="10" x="3" y="7" rx="2" />
-                  </svg>
-                </span>
-              </div>
-              <button id="clear-history-btn" class="btn-clear-action" onclick="app.showCustomPrompt('history')" title="Clear History"></button>
-            </div>
-            <button type="button" class="btn-seasons-view-toggle" id="history-ep-view-toggle" onclick="app.toggleHistoryEpViewMode()" title="Toggle View" style="display:none;"></button>
-          </div>
-          <div class="grid-container" id="history-grid"></div>
-          <div id="history-episodes-list" style="display:none;"></div>
-        </div>
-      </div>
-      <div id="view-browsing" class="view">
-        <div class="content-section view-padded">
-          <div class="section-header view-header-row">
-            <div class="view-header-col">
-              <h2 class="view-title">Browsing History</h2>
-              <button id="clear-browsing-btn" class="btn-clear-action" onclick="app.showCustomPrompt('browsing')" title="Clear History"></button>
-            </div>
-          </div>
-          <div class="grid-container" id="browsing-grid"></div>
-        </div>
-      </div>
-      <div id="view-blocklist" class="view">
-        <div class="content-section view-padded">
-          <h2 class="view-title" style="margin-bottom:15px;">Blocklist</h2>
-          <div style="margin-bottom:25px;width:100%;box-sizing:border-box;background:#ffffff0d;border:1px solid var(--glass-border);border-radius:8px;padding:12px 16px;font-size:0.85rem;color:var(--text-muted);line-height:1.45;">Blocking specific show or movie, filtering by a single category or multiple categories, or combining criteria into custom rules!</div>
-          <div style="margin-bottom:25px;max-width:500px;">
-            <div style="display:flex;gap:10px;">
-              <button id="block-clear-btn" class="btn-primary" style="display:none;border-radius:8px;padding:0 15px;font-size:1.3rem;line-height:1;" onclick="app.clearSearch('block')">&times;</button>
-              <input type="text" class="block-search-input" id="block-search-input" placeholder="Search show or movie to block..." autocomplete="off" style="border-radius:8px;padding:12px 15px;font-size:0.9rem;" oninput="app.toggleClearBtn('block-search-input','block-clear-btn');if(this.value.trim()===''){const s=app.$g('block-search-section');if(s)s.style.display='none';}" onkeyup="if(event.key==='Enter')app.triggerBlockSearch()">
-              <button class="btn-primary" onclick="app.triggerBlockSearch()" style="border-radius:8px;padding:0 25px;white-space:nowrap;">Search</button>
-            </div>
-          </div>
-          <div style="margin-bottom:35px;">
-            <button class="btn-primary" onclick="app.toggleCatBlockMenu()" style="border-radius:5px;padding:8px 20px;">Block by Categories</button>
-            <div id="cat-block-menu" style="display:none; margin-top:15px; background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border:1px solid var(--glass-border);">
-              <div class="filter-bar" id="block-filter-bar" style="margin-bottom:0;"></div>
-              <div style="display:flex;gap:10px;margin-top:14px;">
-                <button class="btn-primary" onclick="app.addCatBlock()" style="border-radius:5px;padding:8px 20px;">Save</button>
-                <button class="btn-primary" onclick="app.toggleCatBlockMenu()" style="border-radius:5px;padding:8px 20px;">Close</button>
-              </div>
-            </div>
-          </div>
-          <div id="block-search-section" style="display:none;margin-bottom:35px;">
-            <h3 class="view-subtitle">Search Results</h3>
-            <div class="grid-container" id="block-search-grid"></div>
-          </div>
-          <h3 class="view-subtitle">Blocked Categories</h3>
-          <div id="cat-blocklist-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,320px));gap:20px;justify-content:center;margin-bottom:35px;width:100%;"></div>
-          <h3 class="view-subtitle">Blocked Shows and Movies</h3>
-          <div class="grid-container" id="blocklist-container"></div>
-        </div>
-      </div>
-      <div id="view-showinfo" class="view">
-        <div id="si-scroll-overlay" class="si-scroll-overlay" style="display:none;">
-          <div class="dots-loader">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-        </div>
-        <div class="showinfo-hero" id="si-hero">
-          <div class="hero-blur-bg" id="si-blur-bg"></div>
-          <div class="hero-bg" id="si-bg"></div>
-          <div class="hero-overlay"></div>
-        </div>
-        <div class="showinfo-content">
-          <div class="showinfo-poster-wrap" id="si-poster-wrap">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz4=" id="si-poster" class="showinfo-poster" onload="if(this.src&&!this.src.startsWith('data:')){this.classList.add('loaded');if(this.parentElement)this.parentElement.classList.add('loaded');}">
-          </div>
-          <div class="showinfo-details">
-            <div id="si-initial-loader" class="dots-loader" style="display:none;">
-              <span class="dot"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-            </div>
-            <h1 class="showinfo-title" id="si-title"></h1>
-            <div class="showinfo-meta-bar" id="si-meta"></div>
-            <div class="si-play-wrap" id="si-play-wrap" style="display:none;">
-              <button class="btn-primary" id="si-play-btn" style="display:none;">Play</button>
-            </div>
-            <div class="si-trailer-wrap" id="si-trailer-wrap">
-              <button class="btn-icon" id="si-trailer-btn" data-icon="trailer" style="display:none;" title="Trailer"></button>
-              <button class="btn-icon" id="si-bookmark-btn" style="display:none;" onclick="app.toggleBookmarkFromInfo(this,event)">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-              <button class="btn-icon" id="si-watched-btn" data-icon="watched" style="display:none;" onclick="app.toggleWatchedFromInfo()" title="Mark as Watched"></button>
-              <button class="btn-icon" id="si-block-btn" style="display:none;" onclick="app.showCustomPrompt('block_current')">×</button>
-            </div>
-            <div class="showinfo-synopsis" id="si-desc"></div>
-            <div class="showinfo-extra-meta" id="si-extra-meta"></div>
-          </div>
-        </div>
-        <div class="content-section si-media-section" id="si-media-section" style="display:none;">
-          <div class="section-header">
-            <div class="si-media-header-left">
-              <button type="button" class="btn-back-to-seasons si-gallery-close-btn" id="si-gallery-close-btn" data-icon="back-seasons" style="display:none;" onclick="app.closeMovieMedia()" title="Close Gallery"></button>
-              <div class="section-title">Gallery</div>
-            </div>
-            <div class="si-media-nav-controls" id="si-media-nav-controls" style="display:none;">
-              <span class="si-media-counter" id="si-media-counter"></span>
-              <button type="button" class="si-media-arrow left" id="si-media-prev" data-icon="arrow-left" onclick="app.navigateMovieMedia(-1)"></button>
-              <button type="button" class="si-media-arrow right" id="si-media-next" data-icon="arrow-right" onclick="app.navigateMovieMedia(1)"></button>
-            </div>
-          </div>
-          <div class="si-media-trigger-wrap" id="si-media-trigger-wrap">
-            <div class="si-season-card si-media-trigger-card" id="si-media-trigger-card" onclick="app.openMovieMedia()">
-              <img class="si-season-img" id="si-media-trigger-img" alt="Gallery" loading="lazy">
-            </div>
-          </div>
-          <div class="si-media-grid" id="si-media-grid" style="display:none;"></div>
-        </div>
-        <div class="si-gap-section" id="si-gap-section"></div>
-        <div id="si-lower-loader" class="dots-loader" style="display:none;width:100%;min-height:220px;padding:60px 0;align-items:center;justify-content:center;">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
-        <div class="episodes-section" id="si-seasons-section" style="display:none;">
-          <div class="si-seasons-header" id="si-seasons-header">
-            <div class="si-seasons-header-left">
-              <h2 id="si-seasons-heading">Seasons</h2>
-            </div>
-            <button type="button" class="btn-seasons-view-toggle" id="si-seasons-view-toggle" onclick="app.toggleSeasonViewMode()" title="Toggle View"></button>
-          </div>
-          <div class="si-seasons-grid" id="si-seasons-grid"></div>
-        </div>
-        <div class="episodes-section" id="si-episodes-section" style="display:none;">
-          <div class="ep-header">
-            <div class="ep-header-left">
-              <button type="button" class="btn-back-to-seasons" id="si-back-to-seasons" data-icon="back-seasons" style="display:none;" onclick="app.showSeasonSelector()" title="Back to Seasons"></button>
-              <h2 id="si-ep-heading">Episodes</h2>
-            </div>
-            <div class="ep-header-right">
-              <button type="button" class="btn-seasons-view-toggle" id="anti-spoiler-btn" onclick="app.toggleSeasonViewMode()" title="Toggle View"></button>
-              <select class="filter-select" id="si-season-select" style="display:none;" onchange="app.loadEpisodes(this.value)"></select>
-            </div>
-          </div>
-          <div class="ep-grid" id="si-ep-grid"></div>
-          <div class="ep-pagination" id="si-ep-pagination"></div>
-        </div>
-        <div class="content-section si-cast-section" id="si-cast-section" style="display:none;">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title si-cast-toggle-title" id="si-cast-title" onclick="app.toggleCastViewMode()">Cast</div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="si-cast-row" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-        <div class="content-section" id="si-similar-section" style="display:none;">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <div class="section-title section-nav-title" id="si-similar-title">Similar Shows</div>
-            </div>
-          </div>
-          <div class="scroll-row-container">
-            <div class="scroll-row" id="si-similar-row" onscroll="app.checkScrollArrow(this)"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-person" class="view">
-        <div class="content-section view-padded">
-          <div id="person-unified-loader" class="unified-contents-loader dots-loader">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-          <div id="person-content-wrap" class="unified-content-wrap" style="display:none;">
-            <div class="section-header view-header-row">
-              <div class="view-header-col">
-                <h2 class="view-title">Biography</h2>
-              </div>
-            </div>
-            <div id="person-bio-section" class="person-bio-section">
-              <div id="person-bio-pic-wrap" class="person-bio-pic-wrap">
-                <img id="person-bio-pic" class="person-bio-pic" alt="" style="display:none;">
-                <div id="person-bio-placeholder" class="person-bio-placeholder">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-              </div>
-              <div class="person-bio-info">
-                <h3 id="person-bio-name" class="person-bio-name"></h3>
-                <div id="person-bio-text" class="person-bio-text"></div>
-              </div>
-            </div>
-            <div class="section-header view-header-row" style="margin-top:28px;margin-bottom:6px;">
-              <div class="view-header-col">
-                <h2 class="view-title person-filmography-title" id="person-filmography-title">Filmography</h2>
-              </div>
-            </div>
-            <div class="person-titles-row" id="person-titles-row" style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px 0;">
-              <h3 class="person-titles-heading" id="person-titles-heading" style="display:none;margin:0;"></h3>
-              <div class="catalog-header-actions" id="person-header-actions" style="display:none;align-items:center;gap:10px;flex-shrink:0;">
-                <div class="catalog-type-filter-bar" id="person-filter-bar" style="display:none;">
-                  <button type="button" class="catalog-type-filter-btn active" id="pfb-all" onclick="app.setPersonTypeFilter('all')">All</button>
-                  <button type="button" class="catalog-type-filter-btn" id="pfb-movie" onclick="app.setPersonTypeFilter('movie')">Movies</button>
-                  <button type="button" class="catalog-type-filter-btn" id="pfb-tv" onclick="app.setPersonTypeFilter('tv')">Shows</button>
-                </div>
-                <div class="year-sort-wrap person-year-sort-wrap" id="person-year-sort-wrap" style="flex-shrink:0;">
-                  <div class="year-sort-btn" id="person-year-sort-btn">
-                    <button type="button" class="year-sort-half year-sort-desc active" id="person-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setPersonYearSort('desc')" title="Newest Year First"></button>
-                    <button type="button" class="year-sort-half year-sort-asc" id="person-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setPersonYearSort('asc')" title="Oldest Year First"></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="filter-bar" id="person-catalog-filter-bar" style="display:none;"></div>
-            <div class="grid-container" id="person-filmography-grid"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-source" class="view">
-        <div class="content-section view-padded">
-          <div id="source-unified-loader" class="unified-contents-loader dots-loader">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-          <div id="source-content-wrap" class="unified-content-wrap" style="display:none;">
-            <div class="section-header view-header-row">
-              <div class="view-header-col">
-                <h2 class="view-title" id="source-cat-heading">Company</h2>
-              </div>
-            </div>
-            <div id="source-info-section" class="source-info-section">
-              <div id="source-logo-wrap" class="source-logo-wrap poster-img-container" style="display:none;">
-                <img id="source-logo-img" class="source-logo-img poster-img" alt="" crossorigin="anonymous" onload="app.applyCompanyLogoBg(this)" onerror="this.classList.add('loaded')">
-              </div>
-              <div class="source-info-meta">
-                <h3 id="source-name" class="source-name"></h3>
-                <div id="source-location-row" class="source-location-row" style="display:none;">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                  <span id="source-location-text"></span>
-                </div>
-              </div>
-            </div>
-            <div class="section-header view-header-row" style="margin-top:28px;margin-bottom:14px;">
-              <div class="view-header-col">
-                <h2 class="view-title" id="source-titles-heading">Titles</h2>
-              </div>
-              <div class="catalog-header-actions" style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                <div class="catalog-type-filter-bar" id="source-filter-bar" style="display:none;">
-                  <button type="button" class="catalog-type-filter-btn active" id="srcfb-all" onclick="app.setSourceTypeFilter('all')">All</button>
-                  <button type="button" class="catalog-type-filter-btn" id="srcfb-movie" onclick="app.setSourceTypeFilter('movie')">Movies</button>
-                  <button type="button" class="catalog-type-filter-btn" id="srcfb-tv" onclick="app.setSourceTypeFilter('tv')">Shows</button>
-                </div>
-                <div class="year-sort-wrap" id="source-year-sort-wrap" style="flex-shrink:0;">
-                  <div class="year-sort-btn" id="source-year-sort-btn">
-                    <button type="button" class="year-sort-half year-sort-desc active" id="source-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setSourceYearSort('desc')" title="Newest Year First"></button>
-                    <button type="button" class="year-sort-half year-sort-asc" id="source-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setSourceYearSort('asc')" title="Oldest Year First"></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="filter-bar" id="source-catalog-filter-bar" style="display:none;"></div>
-            <div class="grid-container" id="source-titles-grid"></div>
-          </div>
-        </div>
-      </div>
-      <div id="view-watch" class="view">
-        <div class="watch-header">
-          <div class="watch-title" id="w-title"></div>
-        </div>
-        <div id="player-tooltip" class="player-tooltip">
-          <div class="tooltip-title">Instructions</div>
-          <div class="tooltip-desc">
-            <b>Refresh button — Reload the player to reset or restore playback. <br>
-              <br> Menu button — Switch seasons or episodes anytime. <br>
-              <br> Gear button — Switch player sources if playback fails to start. <br>
-              <br> Fullscreen button — Enter or exit fullscreen mode. <br>
-              <br>
-            </b>
-          </div>
-          <div class="tooltip-actions">
-            <button class="tooltip-btn" onclick="app.closeTooltip(false)">Close</button>
-            <button class="tooltip-btn highlight" onclick="app.closeTooltip(true)">Don't Show Again</button>
-          </div>
-        </div>
-        <div id="global-player-container">
-          <div class="fs-interaction-catcher"></div>
-          <div class="watch-controls-bar" id="w-controls-bar"></div>
-          <div class="iframe-container">
-            <iframe id="main-iframe" class="w-full h-full border-none" src="" frameborder="0" scrolling="no" referrerpolicy="origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowtransparency="true" style="background-color:#000000;"></iframe>
-            <button type="button" id="w-fs-overlay-btn" class="w-fs-overlay-btn" aria-label="Toggle Fullscreen" onclick="app.toggleFullscreen()"></button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <button id="upBtn" data-icon="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"></button>
-    <div id="dynamic-modals-container"></div>
-    <div id="options-sheet-overlay" class="sheet-overlay" onclick="app.closeOptionsSheet(event)">
-      <div class="sheet-container" id="options-sheet" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">Options</div>
-          <button type="button" class="sheet-close-btn" onclick="app.closeOptionsSheet()">&times;</button>
-        </div>
-        <div class="sheet-list" id="sheet-list"></div>
-      </div>
-    </div>
-    <div id="toast-notif" class="toast-notif"></div>
-    <div id="add-to-list-popover" class="add-to-list-popover" style="display:none;"></div>
-    <script src="app.js"></script>
-    <script src="buster.js"></script>
-    <script src="canvas.js"></script>
-    <script src="dock.js"></script>
-  </body>
+<head>
+<link href='YOUR_LOGO_URL_HERE' rel='icon' type='image/x-icon' />
+<link rel="preload" as="image" href="YOUR_LOGO_URL_HERE" fetchpriority="high">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="dark">
+<meta name="darkreader-lock">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; frame-src 'self' https:;">
+<title>Home</title>
+<link rel="stylesheet" type="text/css" href="style.css?v=126">
+<script>
+(function(){try{var p=new URLSearchParams(window.location.search);var v=p.get('view');if(v&&v!=='home'){document.documentElement.classList.add('page-reloading');}}catch(e){}})();
+</script>
+</head>
+<body>
+<div id="page-reload-overlay"><div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>
+<div id="top-loader"></div>
+<nav class="glass-nav">
+<button class="back-btn nav-back-hidden" id="global-back-btn" data-icon="back" onclick="app.goBack()"></button>
+<button class="nav-btn active" data-icon="home" onclick="app.navigate('home')"></button>
+<button class="nav-btn" data-icon="explore" onclick="app.navigate('explore')"></button>
+<button class="nav-btn" data-icon="mylist" onclick="app.navigate('mylist')"></button>
+<button class="nav-btn" id="nav-search-btn" data-icon="search" onclick="app.navigate('search')"></button>
+<button class="nav-btn" id="nav-options-btn" data-icon="options" onclick="app.toggleOptionsSheet()"></button>
+<button type="button" class="nav-btn nav-col-btn" id="nav-col-btn" data-icon="col-nav" onclick="app.collapseSideNav()" title="Collapse"></button>
+<button type="button" class="nav-min-btn" id="nav-min-btn" onclick="app.restoreNav()">&#9654;</button>
+</nav>
+<div id="app">
+<div id="view-home" class="view active">
+<div class="hero-banner is-loading" id="home-hero">
+<div class="hero-blur-bg" id="hero-blur-bg"></div>
+<div class="hero-bg" id="hero-bg"></div>
+<div class="hero-overlay"></div>
+<div class="hero-content">
+<div class="hero-title" id="hero-title"></div>
+<div class="hero-meta" id="hero-meta"></div>
+<div class="hero-cast" id="hero-cast"></div>
+<div class="hero-desc" id="hero-desc"></div>
+</div>
+<div class="hero-bottom-bar" id="hero-bottom-bar">
+<div class="hero-indicators" id="hero-indicators"></div>
+</div>
+</div>
+<div class="home-dots-loader dots-loader" id="home-dots-loader"><img src="YOUR_LOGO_URL_HERE" alt="" class="home-loader-gif" fetchpriority="high" onload="this.classList.add('is-ready')"></div>
+<div class="content-section" id="continue-watching-section" style="display:none;">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title section-nav-title" id="home-continue-watching-title" onclick="app.navigate('history')"><span>Continue Watching</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="row-continue" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+<div class="content-section">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title section-nav-title" onclick="app.navigate('movies')"><span>Trending Movies</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="row-trend-movies" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+<div class="content-section">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title section-nav-title" onclick="app.navigate('shows')"><span>Trending Shows</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="row-trend-series" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+<div class="content-section">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title">Box Office Movies</div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="row-top-movies" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+<div class="content-section">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title">Top Rated Shows</div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="row-top-series" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+</div>
+<div id="view-explore" class="view">
+<div class="content-section view-padded">
+<div class="section-header view-header-row" id="explore-hub-header">
+<div class="view-header-col">
+<h2 class="view-title">Explore</h2>
+</div>
+</div>
+<div id="explore-hub" class="explore-hub"></div>
+<div id="explore-catalog" class="explore-catalog" style="display:none;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;">
+<div class="explore-header-titles">
+<h2 id="explore-title" class="view-title">Movies</h2>
+<div id="explore-switch-tabs" class="explore-switch-tabs">
+<span id="explore-switch-tv" class="explore-switch-title" title="Shows" onclick="app.switchExploreType('tv', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-4 4.5L8 2"/><rect width="20" height="13" x="2" y="6.5" rx="2.5"/><path d="M6 22h12"/></svg></span>
+<span id="explore-switch-movie" class="explore-switch-title" title="Movies" onclick="app.switchExploreType('movie', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="3"/><path d="M7 2v20M17 2v20M2 6h5M17 6h5M2 10h5M17 10h5M2 14h5M17 14h5M2 18h5M17 18h5"/><polygon fill="currentColor" stroke="currentColor" stroke-width="1" points="10 9 15 12 10 15"/></svg></span>
+<span id="explore-switch-company" class="explore-switch-title" title="Companies" onclick="app.switchExploreType('company', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="20" x="3" y="2" rx="2"/><path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z"/></svg></span>
+<span id="explore-switch-person" class="explore-switch-title" title="People" onclick="app.switchExploreType('person', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="5" height="6.5" x="9.5" y="6.5" rx="2.5"/><path d="M6.5 18.5a5.5 5.5 0 0 1 11 0"/></svg></span>
+</div>
+</div>
+</div>
+<div class="filter-bar" id="explore-filter-bar"></div>
+<div class="grid-container" id="explore-grid"></div>
+</div>
+</div>
+</div>
+<div id="view-search" class="view">
+<div class="search-header view-padded">
+<h2 style="margin-bottom:20px;">Discover Shows & Movies</h2>
+<div style="display:flex;gap:10px;justify-content:center;align-items:center;max-width:460px;width:85%;margin:0 auto 10px;">
+<button id="main-clear-btn" class="btn-primary" style="display:none;" onclick="app.clearSearch('main')">&times;</button>
+<input type="text" class="search-input" id="search-input" placeholder="Search..." autocomplete="on" style="min-width:0;flex:1 1 auto;">
+<button class="btn-primary btn-search-go" onclick="app.triggerSearch()" style="flex-shrink:0;">Go</button>
+<div class="year-sort-wrap search-year-sort-wrap" id="search-year-sort-wrap" style="display:none;flex-shrink:0;">
+<div class="year-sort-btn" id="search-year-sort-btn">
+<button type="button" class="year-sort-half year-sort-desc" id="search-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setSearchYearSort('desc')" title="Newest Year First"></button>
+<button type="button" class="year-sort-half year-sort-asc" id="search-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setSearchYearSort('asc')" title="Oldest Year First"></button>
+</div>
+</div>
+</div>
+<div id="search-filter-bar" class="search-filter-bar">
+<button type="button" class="search-filter-btn active" id="sfb-all" onclick="app.setSearchFilter('all')">All</button>
+<button type="button" class="search-filter-btn" id="sfb-movie" onclick="app.setSearchFilter('movie')">Movies</button>
+<button type="button" class="search-filter-btn" id="sfb-tv" onclick="app.setSearchFilter('tv')">Shows</button>
+</div>
+<div id="search-suggestion" style="font-size:0.85rem;color:var(--text-muted);text-align:center;margin-bottom:20px;display:none;"></div>
+<div id="search-recents" style="display:none;flex-wrap:wrap;gap:8px 16px;justify-content:center;align-items:center;max-width:520px;margin:0 auto 20px;padding:0 15px;"></div>
+<div id="similar-search-badge-wrap" style="display:none;align-items:center;justify-content:center;gap:10px;margin:10px auto 0;max-width:85%;width:fit-content;">
+<div style="background:#ffffff14;border:1px solid var(--glass-border);padding:6px 14px;border-radius:20px;font-size:0.83rem;color:var(--text-main);display:inline-flex;align-items:center;gap:8px;max-width:100%;text-align:center;line-height:1.35;">
+<span id="similar-search-badge-text">Similar Shows: Title</span>
+<button type="button" data-icon="clear-sm" onclick="app.clearSimilarSearch()" style="background:none;border:none;color:#f87171;cursor:pointer;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;line-height:0;width:13px;height:13px;flex-shrink:0;"></button>
+</div>
+</div>
+</div>
+<div class="content-section">
+<div class="grid-container" id="search-grid"></div>
+</div>
+</div>
+<div id="view-mylist" class="view">
+<div class="content-section view-padded">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px;">
+<div id="mylist-title-wrap" style="display:inline-flex;align-items:baseline;gap:8px;">
+<h2 class="view-title" id="mylist-view-title">My List</h2>
+<button type="button" id="mylist-rename-btn" class="btn-rename-list" data-icon="edit-sm" onclick="app.toggleRenameListInput(true)" title="Rename List" style="display:none;"></button>
+</div>
+<div id="rename-list-input-wrap" class="new-list-input-wrap" style="display:none;">
+<input type="text" id="rename-list-name-input" class="new-list-input" placeholder="List name..." maxlength="40" onkeydown="if(event.key==='Enter')app.submitRenameList();if(event.key==='Escape')app.toggleRenameListInput(false);">
+<button type="button" class="btn-new-list-action save" data-icon="plus-md" onclick="app.submitRenameList()" title="Save Name"></button>
+<button type="button" class="btn-new-list-action cancel" onclick="app.toggleRenameListInput(false)" title="Cancel">&times;</button>
+</div>
+</div>
+<button id="clear-mylist-btn" class="btn-clear-action" onclick="app.confirmClearActiveList()" title="Clear List" style="display:none;"></button>
+</div>
+</div>
+<div id="mylist-hub" class="mylist-hub-grid">
+<div class="mylist-hub-card" id="hub-card-bookmark" onclick="app.openMyListSub('bookmark')">
+<div class="mylist-card-collage" id="hub-collage-bookmark"></div>
+<div class="mylist-card-overlay"></div>
+<div class="mylist-card-content">
+<div class="mylist-card-icon" data-icon="star-hub"></div>
+<div class="mylist-card-title">Bookmark</div>
+<div class="mylist-card-subtitle">Save favorite shows & movies for later</div>
+</div>
+</div>
+<div class="mylist-hub-card" id="hub-card-custom" onclick="app.openMyListSub('custom_hub')">
+<div class="mylist-card-collage" id="hub-collage-custom"></div>
+<div class="mylist-card-overlay"></div>
+<div class="mylist-card-content">
+<div class="mylist-card-icon" data-icon="edit-hub"></div>
+<div class="mylist-card-title">Custom List</div>
+<div class="mylist-card-subtitle">Build and organize custom watchlists</div>
+</div>
+</div>
+</div>
+<div id="mylist-custom-hub" style="display:none;">
+<div class="mylist-new-list-bar">
+<button type="button" id="btn-show-new-list" class="btn-new-list" data-icon="plus-sm" onclick="app.toggleNewListInput(true)">New List</button>
+<div id="new-list-input-wrap" class="new-list-input-wrap" style="display:none;">
+<input type="text" id="new-list-name-input" class="new-list-input" placeholder="New list name..." maxlength="40" onkeydown="if(event.key==='Enter')app.submitNewList();if(event.key==='Escape')app.toggleNewListInput(false);">
+<button type="button" class="btn-new-list-action save" data-icon="plus-md" onclick="app.submitNewList()" title="Create List"></button>
+<button type="button" class="btn-new-list-action cancel" onclick="app.toggleNewListInput(false)" title="Cancel">&times;</button>
+</div>
+</div>
+<div class="mylist-custom-grid" id="mylist-custom-grid"></div>
+</div>
+<div id="mylist-catalog-wrap" style="display:none;">
+<div class="grid-container" id="mylist-grid"></div>
+</div>
+</div>
+</div>
+<div id="view-markedaswatched" class="view">
+<div class="content-section view-padded">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px;">
+<div style="display:inline-flex;align-items:baseline;gap:8px;">
+<h2 class="view-title" id="markedaswatched-view-title">Watched</h2>
+</div>
+</div>
+<button id="clear-markedaswatched-btn" class="btn-clear-action" onclick="app.showCustomPrompt('markedaswatched')" title="Clear Marked"></button>
+</div>
+</div>
+<div class="grid-container" id="markedaswatched-grid"></div>
+</div>
+</div>
+<div id="view-history" class="view">
+<div class="content-section view-padded">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<div style="display:inline-flex;align-items:baseline;gap:8px;">
+<h2 class="view-title" id="history-view-title">Titles</h2>
+<span id="history-switch-title" class="explore-switch-title" title="Episodes" onclick="app.switchHistorySub()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V2M3 22v-1a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v1"/><rect width="18" height="10" x="3" y="7" rx="2"/></svg></span>
+</div>
+<button id="clear-history-btn" class="btn-clear-action" onclick="app.showCustomPrompt('history')" title="Clear History"></button>
+</div>
+<button type="button" class="btn-seasons-view-toggle" id="history-ep-view-toggle" onclick="app.toggleHistoryEpViewMode()" title="Toggle View" style="display:none;"></button>
+</div>
+<div class="grid-container" id="history-grid"></div>
+<div id="history-episodes-list" style="display:none;"></div>
+</div>
+</div>
+<div id="view-browsing" class="view">
+<div class="content-section view-padded">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<h2 class="view-title">Browsing History</h2>
+<button id="clear-browsing-btn" class="btn-clear-action" onclick="app.showCustomPrompt('browsing')" title="Clear History"></button>
+</div>
+</div>
+<div class="grid-container" id="browsing-grid"></div>
+</div>
+</div>
+<div id="view-blocklist" class="view">
+<div class="content-section view-padded">
+<h2 class="view-title" style="margin-bottom:15px;">Blocklist</h2>
+<div style="margin-bottom:25px;width:100%;box-sizing:border-box;background:#ffffff0d;border:1px solid var(--glass-border);border-radius:8px;padding:12px 16px;font-size:0.85rem;color:var(--text-muted);line-height:1.45;">Blocking specific show or movie, filtering by a single category or multiple categories, or combining criteria into custom rules!</div>
+<div style="margin-bottom:25px;max-width:500px;">
+<div style="display:flex;gap:10px;">
+<button id="block-clear-btn" class="btn-primary" style="display:none;border-radius:8px;padding:0 15px;font-size:1.3rem;line-height:1;" onclick="app.clearSearch('block')">&times;</button>
+<input type="text" class="block-search-input" id="block-search-input" placeholder="Search show or movie to block..." autocomplete="off" style="border-radius:8px;padding:12px 15px;font-size:0.9rem;" oninput="app.toggleClearBtn('block-search-input','block-clear-btn');if(this.value.trim()===''){const s=app.$g('block-search-section');if(s)s.style.display='none';}" onkeyup="if(event.key==='Enter')app.triggerBlockSearch()">
+<button class="btn-primary" onclick="app.triggerBlockSearch()" style="border-radius:8px;padding:0 25px;white-space:nowrap;">Search</button>
+</div>
+</div>
+<div style="margin-bottom:35px;">
+<button class="btn-primary" onclick="app.toggleCatBlockMenu()" style="border-radius:5px;padding:8px 20px;">Block by Categories</button>
+<div id="cat-block-menu" style="display:none; margin-top:15px; background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border:1px solid var(--glass-border);">
+<div class="filter-bar" id="block-filter-bar" style="margin-bottom:0;"></div>
+<div style="display:flex;gap:10px;margin-top:14px;">
+<button class="btn-primary" onclick="app.addCatBlock()" style="border-radius:5px;padding:8px 20px;">Save</button>
+<button class="btn-primary" onclick="app.toggleCatBlockMenu()" style="border-radius:5px;padding:8px 20px;">Close</button>
+</div>
+</div>
+</div>
+<div id="block-search-section" style="display:none;margin-bottom:35px;">
+<h3 class="view-subtitle">Search Results</h3>
+<div class="grid-container" id="block-search-grid"></div>
+</div>
+<h3 class="view-subtitle">Blocked Categories</h3>
+<div id="cat-blocklist-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,320px));gap:20px;justify-content:center;margin-bottom:35px;width:100%;"></div>
+<h3 class="view-subtitle">Blocked Shows and Movies</h3>
+<div class="grid-container" id="blocklist-container"></div>
+</div>
+</div>
+<div id="view-showinfo" class="view">
+<div id="si-scroll-overlay" class="si-scroll-overlay" style="display:none;"><div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>
+<div class="showinfo-hero" id="si-hero">
+<div class="hero-blur-bg" id="si-blur-bg"></div>
+<div class="hero-bg" id="si-bg"></div>
+<div class="hero-overlay"></div>
+</div>
+<div class="showinfo-content">
+<div class="showinfo-poster-wrap" id="si-poster-wrap">
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz4=" id="si-poster" class="showinfo-poster" onload="if(this.src&&!this.src.startsWith('data:')){this.classList.add('loaded');if(this.parentElement)this.parentElement.classList.add('loaded');}">
+</div>
+<div class="showinfo-details">
+<div id="si-initial-loader" class="dots-loader" style="display:none;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<h1 class="showinfo-title" id="si-title"></h1>
+<div class="showinfo-meta-bar" id="si-meta"></div>
+<div class="si-play-wrap" id="si-play-wrap" style="display:none;">
+<button class="btn-primary" id="si-play-btn" style="display:none;">Play</button>
+</div>
+<div class="si-trailer-wrap" id="si-trailer-wrap">
+<button class="btn-icon" id="si-trailer-btn" data-icon="trailer" style="display:none;" title="Trailer"></button>
+<button class="btn-icon" id="si-bookmark-btn" style="display:none;" onclick="app.toggleBookmarkFromInfo(this,event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+<button class="btn-icon" id="si-watched-btn" data-icon="watched" style="display:none;" onclick="app.toggleWatchedFromInfo()" title="Mark as Watched"></button>
+<button class="btn-icon" id="si-block-btn" style="display:none;" onclick="app.showCustomPrompt('block_current')">×</button>
+</div>
+<div class="showinfo-synopsis" id="si-desc"></div>
+<div class="showinfo-extra-meta" id="si-extra-meta"></div>
+</div>
+</div>
+<div class="content-section si-media-section" id="si-media-section" style="display:none;">
+<div class="section-header">
+<div class="si-media-header-left">
+<button type="button" class="btn-back-to-seasons si-gallery-close-btn" id="si-gallery-close-btn" data-icon="back-seasons" style="display:none;" onclick="app.closeMovieMedia()" title="Close Gallery"></button>
+<div class="section-title">Gallery</div>
+</div>
+<div class="si-media-nav-controls" id="si-media-nav-controls" style="display:none;">
+<span class="si-media-counter" id="si-media-counter"></span>
+<button type="button" class="si-media-arrow left" id="si-media-prev" data-icon="arrow-left" onclick="app.navigateMovieMedia(-1)"></button>
+<button type="button" class="si-media-arrow right" id="si-media-next" data-icon="arrow-right" onclick="app.navigateMovieMedia(1)"></button>
+</div>
+</div>
+<div class="si-media-trigger-wrap" id="si-media-trigger-wrap">
+<div class="si-season-card si-media-trigger-card" id="si-media-trigger-card" onclick="app.openMovieMedia()">
+<img class="si-season-img" id="si-media-trigger-img" alt="Gallery" loading="lazy">
+</div>
+</div>
+<div class="si-media-grid" id="si-media-grid" style="display:none;"></div>
+</div>
+<div class="si-gap-section" id="si-gap-section"></div>
+<div id="si-lower-loader" class="dots-loader" style="display:none;width:100%;min-height:220px;padding:60px 0;align-items:center;justify-content:center;">
+<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+</div>
+<div class="episodes-section" id="si-seasons-section" style="display:none;">
+<div class="si-seasons-header" id="si-seasons-header">
+<div class="si-seasons-header-left">
+<h2 id="si-seasons-heading">Seasons</h2>
+</div>
+<button type="button" class="btn-seasons-view-toggle" id="si-seasons-view-toggle" onclick="app.toggleSeasonViewMode()" title="Toggle View"></button>
+</div>
+<div class="si-seasons-grid" id="si-seasons-grid"></div>
+</div>
+<div class="episodes-section" id="si-episodes-section" style="display:none;">
+<div class="ep-header">
+<div class="ep-header-left">
+<button type="button" class="btn-back-to-seasons" id="si-back-to-seasons" data-icon="back-seasons" style="display:none;" onclick="app.showSeasonSelector()" title="Back to Seasons"></button>
+<h2 id="si-ep-heading">Episodes</h2>
+</div>
+<div class="ep-header-right">
+<button type="button" class="btn-seasons-view-toggle" id="anti-spoiler-btn" onclick="app.toggleSeasonViewMode()" title="Toggle View"></button>
+<select class="filter-select" id="si-season-select" style="display:none;" onchange="app.loadEpisodes(this.value)"></select>
+</div>
+</div>
+<div class="ep-grid" id="si-ep-grid"></div>
+<div class="ep-pagination" id="si-ep-pagination"></div>
+</div>
+<div class="content-section si-cast-section" id="si-cast-section" style="display:none;">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title si-cast-toggle-title" id="si-cast-title" onclick="app.toggleCastViewMode()">Cast</div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="si-cast-row" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+<div class="content-section" id="si-similar-section" style="display:none;">
+<div class="section-header">
+<div class="section-title-wrap">
+<div class="section-title section-nav-title" id="si-similar-title">Similar Shows</div>
+</div>
+</div>
+<div class="scroll-row-container">
+<div class="scroll-row" id="si-similar-row" onscroll="app.checkScrollArrow(this)"></div>
+</div>
+</div>
+</div>
+<div id="view-person" class="view">
+<div class="content-section view-padded">
+<div id="person-unified-loader" class="unified-contents-loader dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<div id="person-content-wrap" class="unified-content-wrap" style="display:none;">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<h2 class="view-title">Biography</h2>
+</div>
+</div>
+<div id="person-bio-section" class="person-bio-section">
+<div id="person-bio-pic-wrap" class="person-bio-pic-wrap">
+<img id="person-bio-pic" class="person-bio-pic" alt="" style="display:none;">
+<div id="person-bio-placeholder" class="person-bio-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+</div>
+<div class="person-bio-info">
+<h3 id="person-bio-name" class="person-bio-name"></h3>
+<div id="person-bio-text" class="person-bio-text"></div>
+</div>
+</div>
+<div class="section-header view-header-row" style="margin-top:28px;margin-bottom:6px;">
+<div class="view-header-col">
+<h2 class="view-title person-filmography-title" id="person-filmography-title">Filmography</h2>
+</div>
+</div>
+<div class="person-titles-row" id="person-titles-row" style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px 0;">
+<h3 class="person-titles-heading" id="person-titles-heading" style="display:none;margin:0;"></h3>
+<div class="catalog-header-actions" id="person-header-actions" style="display:none;align-items:center;gap:10px;flex-shrink:0;">
+<div class="catalog-type-filter-bar" id="person-filter-bar" style="display:none;">
+<button type="button" class="catalog-type-filter-btn active" id="pfb-all" onclick="app.setPersonTypeFilter('all')">All</button>
+<button type="button" class="catalog-type-filter-btn" id="pfb-movie" onclick="app.setPersonTypeFilter('movie')">Movies</button>
+<button type="button" class="catalog-type-filter-btn" id="pfb-tv" onclick="app.setPersonTypeFilter('tv')">Shows</button>
+</div>
+<div class="year-sort-wrap person-year-sort-wrap" id="person-year-sort-wrap" style="flex-shrink:0;">
+<div class="year-sort-btn" id="person-year-sort-btn">
+<button type="button" class="year-sort-half year-sort-desc active" id="person-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setPersonYearSort('desc')" title="Newest Year First"></button>
+<button type="button" class="year-sort-half year-sort-asc" id="person-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setPersonYearSort('asc')" title="Oldest Year First"></button>
+</div>
+</div>
+</div>
+</div>
+<div class="filter-bar" id="person-catalog-filter-bar" style="display:none;"></div>
+<div class="grid-container" id="person-filmography-grid"></div>
+</div>
+</div>
+</div>
+<div id="view-source" class="view">
+<div class="content-section view-padded">
+<div id="source-unified-loader" class="unified-contents-loader dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+<div id="source-content-wrap" class="unified-content-wrap" style="display:none;">
+<div class="section-header view-header-row">
+<div class="view-header-col">
+<h2 class="view-title" id="source-cat-heading">Company</h2>
+</div>
+</div>
+<div id="source-info-section" class="source-info-section">
+<div id="source-logo-wrap" class="source-logo-wrap poster-img-container" style="display:none;"><img id="source-logo-img" class="source-logo-img poster-img" alt="" crossorigin="anonymous" onload="app.applyCompanyLogoBg(this)" onerror="this.classList.add('loaded')"></div>
+<div class="source-info-meta">
+<h3 id="source-name" class="source-name"></h3>
+<div id="source-location-row" class="source-location-row" style="display:none;">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+<span id="source-location-text"></span>
+</div>
+</div>
+</div>
+<div class="section-header view-header-row" style="margin-top:28px;margin-bottom:14px;">
+<div class="view-header-col">
+<h2 class="view-title" id="source-titles-heading">Titles</h2>
+</div>
+<div class="catalog-header-actions" style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+<div class="catalog-type-filter-bar" id="source-filter-bar" style="display:none;">
+<button type="button" class="catalog-type-filter-btn active" id="srcfb-all" onclick="app.setSourceTypeFilter('all')">All</button>
+<button type="button" class="catalog-type-filter-btn" id="srcfb-movie" onclick="app.setSourceTypeFilter('movie')">Movies</button>
+<button type="button" class="catalog-type-filter-btn" id="srcfb-tv" onclick="app.setSourceTypeFilter('tv')">Shows</button>
+</div>
+<div class="year-sort-wrap" id="source-year-sort-wrap" style="flex-shrink:0;">
+<div class="year-sort-btn" id="source-year-sort-btn">
+<button type="button" class="year-sort-half year-sort-desc active" id="source-year-sort-desc-btn" data-icon="sort-desc" onclick="app.setSourceYearSort('desc')" title="Newest Year First"></button>
+<button type="button" class="year-sort-half year-sort-asc" id="source-year-sort-asc-btn" data-icon="sort-asc" onclick="app.setSourceYearSort('asc')" title="Oldest Year First"></button>
+</div>
+</div>
+</div>
+</div>
+<div class="filter-bar" id="source-catalog-filter-bar" style="display:none;"></div>
+<div class="grid-container" id="source-titles-grid"></div>
+</div>
+</div>
+</div>
+<div id="view-watch" class="view">
+<div class="watch-header">
+<div class="watch-title" id="w-title"></div>
+</div>
+<div id="player-tooltip" class="player-tooltip">
+<div class="tooltip-title">Instructions</div>
+<div class="tooltip-desc">
+<b>Refresh button — Reload the player to reset or restore playback.<br><br>
+Menu button — Switch seasons or episodes anytime.<br><br>
+Gear button — Switch player sources if playback fails to start.<br><br>
+Fullscreen button — Enter or exit fullscreen mode.<br><br>
+</b>
+</div>
+<div class="tooltip-actions">
+<button class="tooltip-btn" onclick="app.closeTooltip(false)">Close</button>
+<button class="tooltip-btn highlight" onclick="app.closeTooltip(true)">Don't Show Again</button>
+</div>
+</div>
+<div id="global-player-container">
+<div class="fs-interaction-catcher"></div>
+<div class="watch-controls-bar" id="w-controls-bar"></div>
+<div class="iframe-container">
+<iframe id="main-iframe" class="w-full h-full border-none" src="" frameborder="0" scrolling="no" referrerpolicy="origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowtransparency="true" style="background-color:#000000;"></iframe>
+<button type="button" id="w-fs-overlay-btn" class="w-fs-overlay-btn" aria-label="Toggle Fullscreen" onclick="app.toggleFullscreen()"></button>
+</div>
+</div>
+</div>
+</div>
+<button id="upBtn" data-icon="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"></button>
+<div id="dynamic-modals-container"></div>
+<div id="options-sheet-overlay" class="sheet-overlay" onclick="app.closeOptionsSheet(event)">
+<div class="sheet-container" id="options-sheet" onclick="event.stopPropagation()">
+<div class="sheet-header">
+<div class="sheet-title">Options</div>
+<button type="button" class="sheet-close-btn" onclick="app.closeOptionsSheet()">&times;</button>
+</div>
+<div class="sheet-list" id="sheet-list"></div>
+</div>
+</div>
+<div id="toast-notif" class="toast-notif"></div>
+<div id="add-to-list-popover" class="add-to-list-popover" style="display:none;"></div>
+<script src="app.js?v=2"></script>
+<script src="buster.js?v=2"></script>
+<script src="canvas.js?v=2"></script>
+<script src="dock.js?v=2"></script>
+</body>
 </html>
