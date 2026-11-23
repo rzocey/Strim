@@ -5227,7 +5227,8 @@ Object.assign(app, {
 				this.applySavedBtnState(btn, this.getSavedBtnInfo(id, true, data), true);
 				btn.style.display = 'inline-flex';
 			}
-			const isReleased = data.is_anilist ? ['finished', 'releasing', 'ended', 'released'].includes(status.toLowerCase()) : ((type === 'movie') ? (status.toLowerCase() === 'released') : ['released', 'returning series', 'ended', 'canceled'].includes(status.toLowerCase()));
+			const isReleased = data.is_anilist ? ['finished', 'releasing', 'ended', 'released'].includes(status.toLowerCase()) : ((type === 'movie') ? (status.toLowerCase() === 'released') : (['released', 'returning series', 'in production', 'ended', 'canceled', 'cancelled', 'pilot'].includes(status.toLowerCase()) || validSeasons.length > 0));
+			if (!isReleased) lowerSeasonsReady = true;
 			if (watchedBtn) {
 				if (type === 'movie' && !isReleased) {
 					watchedBtn.style.display = 'none';
