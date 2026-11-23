@@ -5106,7 +5106,7 @@ const pPath = String(c.profile_path).startsWith('/') ? c.profile_path : ('/' + c
 imgUrl = IMG_BASE + 'w185' + pPath;
 }
 }
-const noPicSvg = '<div class="si-cast-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="5" height="6.5" x="9.5" y="6.5" rx="2.5"/><path d="M6.5 18.5a5.5 5.5 0 0 1 11 0"/></svg></div>';
+const noPicSvg = CAST_PLACEHOLDER_SVG;
 const imgHtml = mode === 'pic' ? ('<div class="si-cast-img-wrap">' + noPicSvg + (imgUrl ? ('<img class="si-cast-img" src="' + imgUrl + '" onload="this.classList.add(\'loaded\')" onerror="this.style.display=\'none\'" />') : '') + '</div>') : '';
 const clickAttr = c.id ? (' onclick="app.openPerson(' + c.id + ')"') : '';
 return '<div class="si-cast-card"' + clickAttr + '>' + imgHtml + '<div class="si-cast-meta"><div class="si-cast-name" title="' + name + '">' + name + '</div><div class="si-cast-role" title="' + role + '">' + role + '</div></div></div>';

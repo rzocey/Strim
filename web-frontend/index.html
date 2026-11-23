@@ -10,7 +10,7 @@
 <meta name="darkreader-lock">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; frame-src 'self' https:;">
 <title>Home</title>
-<link rel="stylesheet" type="text/css" href="style.css?v=126">
+<link rel="stylesheet" type="text/css" href="style.css">
 <script>
 (function(){try{var p=new URLSearchParams(window.location.search);var v=p.get('view');if(v&&v!=='home'){document.documentElement.classList.add('page-reloading');}}catch(e){}})();
 </script>
@@ -48,7 +48,7 @@
 <div class="content-section" id="continue-watching-section" style="display:none;">
 <div class="section-header">
 <div class="section-title-wrap">
-<div class="section-title section-nav-title" id="home-continue-watching-title" onclick="app.navigate('history')"><span>Continue Watching</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+<div class="section-title section-nav-title" id="home-continue-watching-title" onclick="app.navigate('history')"><span>Continue Watching</span><span class="section-nav-icon" data-icon="expand-right"></span></div>
 </div>
 </div>
 <div class="scroll-row-container">
@@ -58,7 +58,7 @@
 <div class="content-section">
 <div class="section-header">
 <div class="section-title-wrap">
-<div class="section-title section-nav-title" onclick="app.navigate('movies')"><span>Trending Movies</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+<div class="section-title section-nav-title" onclick="app.navigate('movies')"><span>Trending Movies</span><span class="section-nav-icon" data-icon="expand-right"></span></div>
 </div>
 </div>
 <div class="scroll-row-container">
@@ -68,7 +68,7 @@
 <div class="content-section">
 <div class="section-header">
 <div class="section-title-wrap">
-<div class="section-title section-nav-title" onclick="app.navigate('shows')"><span>Trending Shows</span><span class="section-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg></span></div>
+<div class="section-title section-nav-title" onclick="app.navigate('shows')"><span>Trending Shows</span><span class="section-nav-icon" data-icon="expand-right"></span></div>
 </div>
 </div>
 <div class="scroll-row-container">
@@ -109,10 +109,10 @@
 <div class="explore-header-titles">
 <h2 id="explore-title" class="view-title">Movies</h2>
 <div id="explore-switch-tabs" class="explore-switch-tabs">
-<span id="explore-switch-tv" class="explore-switch-title" title="Shows" onclick="app.switchExploreType('tv', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-4 4.5L8 2"/><rect width="20" height="13" x="2" y="6.5" rx="2.5"/><path d="M6 22h12"/></svg></span>
-<span id="explore-switch-movie" class="explore-switch-title" title="Movies" onclick="app.switchExploreType('movie', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="3"/><path d="M7 2v20M17 2v20M2 6h5M17 6h5M2 10h5M17 10h5M2 14h5M17 14h5M2 18h5M17 18h5"/><polygon fill="currentColor" stroke="currentColor" stroke-width="1" points="10 9 15 12 10 15"/></svg></span>
-<span id="explore-switch-company" class="explore-switch-title" title="Companies" onclick="app.switchExploreType('company', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="20" x="3" y="2" rx="2"/><path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z"/></svg></span>
-<span id="explore-switch-person" class="explore-switch-title" title="People" onclick="app.switchExploreType('person', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="5" height="6.5" x="9.5" y="6.5" rx="2.5"/><path d="M6.5 18.5a5.5 5.5 0 0 1 11 0"/></svg></span>
+<span id="explore-switch-tv" class="explore-switch-title" title="Shows" data-icon="switch-tv" onclick="app.switchExploreType('tv', this)"></span>
+<span id="explore-switch-movie" class="explore-switch-title" title="Movies" data-icon="switch-movie" onclick="app.switchExploreType('movie', this)"></span>
+<span id="explore-switch-company" class="explore-switch-title" title="Companies" data-icon="switch-company" onclick="app.switchExploreType('company', this)"></span>
+<span id="explore-switch-person" class="explore-switch-title" title="People" data-icon="switch-person" onclick="app.switchExploreType('person', this)"></span>
 </div>
 </div>
 </div>
@@ -228,7 +228,7 @@
 <div class="view-header-col">
 <div style="display:inline-flex;align-items:baseline;gap:8px;">
 <h2 class="view-title" id="history-view-title">Titles</h2>
-<span id="history-switch-title" class="explore-switch-title" title="Episodes" onclick="app.switchHistorySub()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V2M3 22v-1a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v1"/><rect width="18" height="10" x="3" y="7" rx="2"/></svg></span>
+<span id="history-switch-title" class="explore-switch-title" title="Episodes" data-icon="switch-episodes" onclick="app.switchHistorySub()"></span>
 </div>
 <button id="clear-history-btn" class="btn-clear-action" onclick="app.showCustomPrompt('history')" title="Clear History"></button>
 </div>
@@ -300,7 +300,7 @@
 </div>
 <div class="si-trailer-wrap" id="si-trailer-wrap">
 <button class="btn-icon" id="si-trailer-btn" data-icon="trailer" style="display:none;" title="Trailer"></button>
-<button class="btn-icon" id="si-bookmark-btn" style="display:none;" onclick="app.toggleBookmarkFromInfo(this,event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+<button class="btn-icon" id="si-bookmark-btn" data-icon="plus-si" style="display:none;" onclick="app.toggleBookmarkFromInfo(this,event)"></button>
 <button class="btn-icon" id="si-watched-btn" data-icon="watched" style="display:none;" onclick="app.toggleWatchedFromInfo()" title="Mark as Watched"></button>
 <button class="btn-icon" id="si-block-btn" style="display:none;" onclick="app.showCustomPrompt('block_current')">×</button>
 </div>
@@ -387,7 +387,7 @@
 <div id="person-bio-section" class="person-bio-section">
 <div id="person-bio-pic-wrap" class="person-bio-pic-wrap">
 <img id="person-bio-pic" class="person-bio-pic" alt="" style="display:none;">
-<div id="person-bio-placeholder" class="person-bio-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+<div id="person-bio-placeholder" class="person-bio-placeholder" data-icon="person-bio-placeholder"></div>
 </div>
 <div class="person-bio-info">
 <h3 id="person-bio-name" class="person-bio-name"></h3>
@@ -434,7 +434,7 @@
 <div class="source-info-meta">
 <h3 id="source-name" class="source-name"></h3>
 <div id="source-location-row" class="source-location-row" style="display:none;">
-<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+<span data-icon="map-pin" style="display:inline-flex;"></span>
 <span id="source-location-text"></span>
 </div>
 </div>
@@ -503,9 +503,11 @@ Fullscreen button — Enter or exit fullscreen mode.<br><br>
 </div>
 <div id="toast-notif" class="toast-notif"></div>
 <div id="add-to-list-popover" class="add-to-list-popover" style="display:none;"></div>
-<script src="app.js?v=2"></script>
-<script src="buster.js?v=2"></script>
-<script src="canvas.js?v=2"></script>
-<script src="dock.js?v=2"></script>
+<script src="app.js"></script>
+<script src="easy.js"></script>
+<script src="fuse.js"></script>
+<script src="buster.js"></script>
+<script src="canvas.js"></script>
+<script src="dock.js"></script>
 </body>
 </html>

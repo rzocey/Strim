@@ -5,97 +5,6 @@ const MApi = "MAL_API";
 const ANILIST_URL = "https://graphql.anilist.co";
 const BASE_URL = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/";
-const svgStroke = (p, w = 24, h = w, sw = 2, extra = '') => `<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"${extra ? ' ' + extra : ''}>${p}</svg>`;
-const svgFill = (p, w = 24, h = w, extra = '') => `<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="currentColor"${extra ? ' ' + extra : ''}>${p}</svg>`;
-const STAR_SVG = (w = 12, h = w) => `<svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-STAR_SVG.toString = () => STAR_SVG(12, 12);
-const CHECK_SVG = (w = 13, h = w) => svgStroke('<polyline points="20 6 9 17 4 12"/>', w, h, 2.8, 'style="flex-shrink:0;"');
-CHECK_SVG.toString = () => CHECK_SVG(13, 13);
-const PLUS_SVG = (w = 13, h = w, sw = 4) => svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', w, h, sw, 'style="flex-shrink:0;"');
-PLUS_SVG.toString = () => PLUS_SVG(13, 13);
-const TRASH_SVG = svgStroke('<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="9" x2="9" y1="10" y2="18" stroke-width="1.5"/><line x1="12" x2="12" y1="10" y2="18" stroke-width="1.5"/><line x1="15" x2="15" y1="10" y2="18" stroke-width="1.5"/>', 18);
-const GRID_VIEW_SVG = svgStroke('<rect width="18" height="18" x="3" y="3" rx="2"/><rect width="5.5" height="5.5" x="5.5" y="5.5" rx="1" fill="currentColor" stroke="none"/><rect width="5.5" height="5.5" x="13" y="5.5" rx="1" fill="currentColor" stroke="none"/><rect width="5.5" height="5.5" x="5.5" y="13" rx="1" fill="currentColor" stroke="none"/><rect width="5.5" height="5.5" x="13" y="13" rx="1" fill="currentColor" stroke="none"/>', 24);
-const LIST_VIEW_SVG = svgStroke('<rect width="18" height="18" x="3" y="3" rx="2"/><rect width="13" height="3" x="5.5" y="5.5" rx="1" fill="currentColor" stroke="none"/><rect width="13" height="3" x="5.5" y="10.5" rx="1" fill="currentColor" stroke="none"/><rect width="13" height="3" x="5.5" y="15.5" rx="1" fill="currentColor" stroke="none"/>', 24);
-const MIN_VIEW_SVG = svgStroke('<rect width="18" height="18" x="3" y="3" rx="2"/><rect width="13" height="3" x="5.5" y="10.5" rx="1" fill="currentColor" stroke="none"/>', 24);
-const PICTURE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="5" height="6.5" x="9.5" y="6.5" rx="2.5"/><path d="M6.5 18.5a5.5 5.5 0 0 1 11 0"/></svg>';
-const COMPANY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke-linecap:round;stroke-linejoin:round;"><rect width="18" height="20" x="3" y="2" rx="2"/><path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z"/></svg>';
-const EYE_SVG = (w = 13, h = w, crossed = false) => svgStroke('<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>' + (crossed ? '<line x1="4" y1="4" x2="20" y2="20"/>' : ''), w, h, 2.5, 'style="flex-shrink:0;"');
-EYE_SVG.toString = () => EYE_SVG(13, 13);
-const TRI_ARROW_SVG = (d, w = 17, h = w) => svgFill(`<path d="${d}"/>`, w, h);
-const YT_SVG = (w = 20, h = w) => `<svg width="${w}" height="${h}"viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path fill="var(--path1, #ffffff)" d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17z" /><polygon points="10 8.5 16 12 10 15.5" fill="var(--path2, #000000)" /></svg>`;
-YT_SVG.toString = () => YT_SVG(20, 20);
-const DOTS_HTML = '<div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
-const PLAY_BTN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect width="18" height="18" x="3" y="3" rx="2"/><polygon points="9.5 7.5 16.5 12 9.5 16.5" fill="currentColor" stroke="none"/></svg>`;
-const PAUSE_BTN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9.5" y1="7.5" x2="9.5" y2="16.5" stroke-width="3"/><line x1="14.5" y1="7.5" x2="14.5" y2="16.5" stroke-width="3"/></svg>`;
-const ANIME_BTN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7.5 7.5h9l-3.1 4.3M11.7 10c0 3.4-1.25 5.3-3.4 6.5" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const EXPLORE_SEARCH_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="11" cy="11" r="3.5" /><path d="m16.5 16.5-3-3" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const GALLERY_BTN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="8" height="8" x="8" y="8" rx="1"/></svg>`;
-const INFO_BTN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="7.5" r="1.25" fill="currentColor" stroke="none"/><path d="M12 10v7"/></svg>`;
-const EXPAND_LEFT_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const EXPAND_RIGHT_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const EXPAND_DOWN_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const EXPAND_UP_SVG = (w = 18, h = w) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;"><path d="m18 15-6-6-6 6" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;" /></svg>`;
-const STATIC_ICONS = {
-back: svgStroke('<path d="M19 12H5M12 19l-7-7 7-7"/>', 22, 22, 2.5),
-home: svgStroke('<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/>', 24),
-explore: svgStroke('<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 5.93h14.14M4.93 18.07h14.14"/>', 24),
-mylist: svgFill('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', 24, 24, 'style="flex-shrink:0;"'),
-search: svgStroke('<circle cx="10" cy="10" r="7"/><path d="m22 22-7-7"/>', 24),
-options: svgStroke('<path d="M3 4h18M3 12h18M3 20h18M14 2v4M8 10v4M16 18v4"/>', 24),
-'col-nav': svgStroke('<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>', 24, 24, 2.2),
-'sort-desc': svgFill('<path d="M12 4l9 14H3z"/>', 10),
-'sort-asc': svgFill('<path d="M12 20L3 6h18z"/>', 10),
-'clear-sm': svgStroke('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>', 13, 13, 2.5, 'style="display:block;"'),
-'edit-sm': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 15),
-'edit-hub': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 24),
-'plus-sm': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 15, 15, 2.5),
-'plus-md': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 18, 18, 2.5),
-'star-hub': '<svg width="28" height="28" viewBox="0 0 24 24" fill="#378EF0" stroke="#378EF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-trailer: YT_SVG(20, 20),
-watched: EYE_SVG(20, 20, true),
-'arrow-left': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M16 12H8m4-4-4 4 4 4" /></svg>',
-'arrow-right': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 12h8m-4-4 4 4-4 4" /></svg>',
-'back-seasons': svgStroke('<path d="M10 8V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-3"/><polyline points="7 7 2 12 7 17"/><line x1="2" y1="12" x2="16" y2="12"/>', 21),
-'scroll-top': svgFill('<path d="M13.5 21a1.5 1.5 0 0 1-3 0V7.83l-4.88 4.88a1.5 1.5 0 1 1-2.12-2.12l7.5-7.5a1.5 1.5 0 0 1 2.12 0l7.5 7.5a1.5 1.5 0 1 1-2.12 2.12L13.5 7.83z"/>', 18)
-};
-const srv = (name, host, m, tv, opts = {}) => ({
-name,
-movie: (id) => `https://${host}${m(id)}`,
-tv: (id, s, e) => `https://${host}${tv(id, s, e)}`,
-...opts
-});
-const P_EMBED_M = id => `/embed/movie/${id}`;
-const P_EMBED_TV = (id, s, e) => `/embed/tv/${id}/${s}/${e}`;
-const P_PLAIN_M = id => `/movie/${id}`;
-const P_PLAIN_TV = (id, s, e) => `/tv/${id}/${s}/${e}`;
-const P_WATCH_M = id => `/watch/movie/${id}`;
-const P_WATCH_TV = (id, s, e) => `/watch/tv/${id}/${s}/${e}`;
-const embedServers = {
-"1": srv("Example 1", "www.example.com", P_EMBED_M, (id, s, e) => `/embed/tv/${id}/${s}/${e}`),
-"2": srv("Example 2", "www.example.com", id => `/movie/${id}?autoplay=true`, (id, s, e) => `/tv/${id}/${s}/${e}`),
-};
-const animeServers = {
-sub: {
-"1": {
-name: "Example 1",
-url: (mal, ani, ep) => `https://www.example.com/stream/mal/${mal}/${ep}/sub`
-},
-"2": {
-name: "Example 2",
-url: (mal, ani, ep) => `https://www.example.com/stream/ani/${ani}/${ep}/sub`
-},
-},
-dub: {
-"1": {
-name: "Example 1",
-url: (mal, ani, ep) => `https://www.example.com/stream/mal/${mal}/${ep}/dub`
-},
-"2": {
-name: "Example 2",
-url: (mal, ani, ep) => `https://www.example.com/stream/ani/${ani}/${ep}/dub`
-},
-}
-};
 var app = {
 tmdbCache: {},
 apiInFlight: {},
@@ -985,8 +894,8 @@ if (img.complete && img.naturalWidth > 0 && !img.closest('#view-home .scroll-row
 });
 },
 setupScrollRowArrows() {
-const lSvg = STATIC_ICONS['arrow-left'] || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M16 12H8m4-4-4 4 4 4" /></svg>';
-const rSvg = STATIC_ICONS['arrow-right'] || '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 12h8m-4-4 4 4-4 4" /></svg>';
+const lSvg = ARROW_LEFT_SVG;
+const rSvg = ARROW_RIGHT_SVG;
 document.querySelectorAll('.row-nav-arrows').forEach(el => el.remove());
 document.querySelectorAll('.scroll-row').forEach(row => {
 const container = row.closest('.scroll-row-container');
@@ -2627,19 +2536,35 @@ if (!skipGoBack) this.goBack();
 },
 isBlocked: function(item, typeOverride = null) {
 if (!item) return false;
+const JAV_TITLE_RE = /^[A-Z]{2,6}-\d{2,5}\b/i;
+const ADULT_STUDIOS_RE = /^(?:sod create|soft on demand|moodyz|s1 no\.1 style|idea pocket|prestige|attackers|madonna|fitch|glay'z|wanz factory|tma|rookie|kawaii\*)$/i;
+const ADULT_TEXT_RE = /(?!)/;
+const JAP_ADULT_RE = /\b(?:creampie|creampies|cuckold|bukkake)\b/i;
+const JA_KANA_RE = /[\u3040-\u30ff]/i;
+const ASIAN_VI_RE = /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7afảạăằắẳẵặầấẩẫậẻẽẹềếểễệỉĩịỏọồốổỗộơờớởỡợủũụưừứửữựỷỹỵđ]/i;
+const BANNED_IDS = app._bannedIds || (app._bannedIds = new Set([1794170, 207840, 204269, 95897, 78501, 241002, 233643, 113360, 88090, 212568, 284780, 81044, 271026, 288577, 118588, 157879, 245215, 90388, 249891, 118824, 292554, 220118, 75778, 300015, 279120, 106342, 107840, 287973, 329623, 70998, 105903, 100937, 324230, 71216, 45460, 324247, 48624, 272108, 55892, 425004, 60933, 584547, 233071, 233928, 1259564, 1722025, 1027993, 452200, 513367, 1006738, 1022858, 88119, 981039, 984202, 802877, 1027946, 1026149, 1261871, 337152, 1182057, 337481, 337593, 337403, 337226, 337223, 337221, 337662, 337719]));
 const id = typeof item === 'object' ? item.id : item;
 const numId = parseInt(id);
 const isValidObj = typeof item === 'object' && item.id && (item.title || item.name) && (item.poster_path || item.backdrop_path) && !item.adult; if (isValidObj && this.deadIds && (this.deadIds.has(String(id)) || this.deadIds.has(numId))) { this.deadIds.delete(String(id)); this.deadIds.delete(numId); }
 if (!isValidObj && this.deadIds && (this.deadIds.has(String(id)) || this.deadIds.has(numId))) return true;
+if (BANNED_IDS.has(numId)) return true;
 const type = typeOverride || (typeof item === 'object' ? (item.media_type || (item.name ? 'tv' : 'movie')) : null);
 if (typeof item === 'object') {
 if (!item.poster_path && (!item.backdrop_path || (!item.overview && (!item.genres || item.genres.length === 0)))) return true;
 if (item.adult) return true;
+const titleToCheck = (item.title || item.name || item.original_title || item.original_name || '').trim();
+if (JAV_TITLE_RE.test(titleToCheck)) return true;
+const compNames = (item.production_companies || []).map(c => (c.name || '').toLowerCase());
+if (compNames.some(n => ADULT_STUDIOS_RE.test(n))) return true;
 const oLang = item.original_language || '';
 const ctry = Array.isArray(item.origin_country) ? item.origin_country : [];
+const allText = (item.name || '') + ' ' + (item.original_name || '') + ' ' + (item.title || '') + ' ' + (item.original_title || '') + ' ' + (item.overview || '');
+if (ADULT_TEXT_RE.test(allText)) return true;
+if (JAP_ADULT_RE.test(allText) && (oLang === 'ja' || ctry.includes('JP') || JA_KANA_RE.test(allText))) return true;
 const hasGenres = (Array.isArray(item.genre_ids) && item.genre_ids.length > 0) || (Array.isArray(item.genres) && item.genres.length > 0);
 const noGenres = !hasGenres;
 const isZeroVoteLowPop = typeof item.vote_count === 'number' && item.vote_count === 0 && (item.popularity || 0) < 1;
+if ((oLang === 'en' || ctry.includes('US')) && ASIAN_VI_RE.test(allText) && isZeroVoteLowPop) return true;
 if (type === 'tv' && (ctry.includes('US') || oLang === 'en') && noGenres && isZeroVoteLowPop) return true;
 if (type === 'tv' && ctry.length === 0 && (!item.overview || !item.overview.trim()) && isZeroVoteLowPop) return true;
 const rawDateStr0 = String(item.release_date || item.first_air_date || item.air_date || '').trim(); const relTs0 = rawDateStr0 ? Date.parse(rawDateStr0) : NaN; const isReleasedPast = !isNaN(relTs0) && relTs0 <= Date.now(); const hasDate = Boolean(rawDateStr0 || (item.year && String(item.year).trim()));
@@ -3811,13 +3736,6 @@ if (e.button === 0) onStart(e.clientX, e.clientY);
 });
 window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY, e));
 window.addEventListener('mouseup', onEnd);
-},
-renderStaticIcons: function() {
-document.querySelectorAll('[data-icon]').forEach(el => {
-if (el.querySelector('svg')) return;
-const k = el.getAttribute('data-icon');
-if (STATIC_ICONS[k]) el.insertAdjacentHTML('afterbegin', STATIC_ICONS[k]);
-});
 }
 };
 window.app = app;
