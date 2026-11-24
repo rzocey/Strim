@@ -46,7 +46,7 @@ Object.assign(app, {
 	closeTrailer(e = null, fromPopState = false) {
 		this.toggleAppModal('trailer', false, e, fromPopState);
 	},
-	selectExploreCategory(type, pushState = true, restoreScroll = false) {
+	selectExploreCategory(type, pushState = true, restoreScroll = false, replaceState = false) {
 		document.body.classList.remove('explore-hub-open');
 		document.documentElement.classList.remove('explore-hub-open');
 		const viewMap = {
@@ -74,11 +74,14 @@ Object.assign(app, {
 		if (tEl) tEl.innerText = title;
 		['tv', 'movie', 'company', 'person'].forEach(k => {
 			const sw = this.$g('explore-switch-' + k);
-			if (sw) sw.style.display = (k === type) ? 'none' : '';
+			if (sw) {
+				sw.style.display = '';
+				sw.classList.toggle('active', k === type);
+			}
 		});
 		this.syncHistoryUrl({
 			view: viewId
-		}, title, `?view=${viewId}`, pushState);
+		}, title, `?view=${viewId}`, pushState, replaceState);
 		this.currentView = viewId;
 		this.updateBackBtn(this.currentView);
 		const grid = this.$g('explore-grid');
@@ -176,7 +179,7 @@ Object.assign(app, {
 				requestAnimationFrame(() => imgs.forEach(img => img.classList.add('loaded')));
 			});
 		};
-		if (!this.exploreSets) this.exploreSets = this.$storeGet('str_c_exploresets_v6', null) || this.$sessGet('str_c_exploresets_v6', null);
+		if (!this.exploreSets) this.exploreSets = this.$storeGet('str_c_exploresets_v7', null) || this.$sessGet('str_c_exploresets_v7', null);
 		if (!this.exploreCollageIdxMap) {
 			const savedIdx = this.$storeGet('str_c_explore_collage_idx', null);
 			this.exploreCollageIdxMap = (savedIdx && savedIdx.idxMap) ? savedIdx.idxMap : {
@@ -198,16 +201,10 @@ Object.assign(app, {
 			return;
 		}
 		try {
-			const [m1, m2, s1, s2, p1, p2, wp, an] = await Promise.all([
+			const [m1, s1, p1, wp] = await Promise.all([
 				this.api('/discover/movie', {
 					sort_by: 'revenue.desc',
 					page: 1
-				}).catch(() => ({
-					results: []
-				})),
-				this.api('/discover/movie', {
-					sort_by: 'revenue.desc',
-					page: 2
 				}).catch(() => ({
 					results: []
 				})),
@@ -217,86 +214,41 @@ Object.assign(app, {
 				}).catch(() => ({
 					results: []
 				})),
-				this.api('/discover/tv', {
-					sort_by: 'vote_count.desc',
-					page: 2
-				}).catch(() => ({
-					results: []
-				})),
 				this.api('/person/popular', {
 					page: 1
 				}).catch(() => ({
 					results: []
 				})),
-				this.api('/person/popular', {
-					page: 2
-				}).catch(() => ({
-					results: []
-				})),
-				Promise.all(['213', '1024', '2739', '2552', '453', '6703', '3186', '4330', '3353', '1112', '318', '67', '4353', '6219', '4883', '2542', '2700', '2697', '2707', '1436', '4692', '3626', '3343', '3039', '3475', '1081'].map(nid => this.api('/network/' + nid, {}).catch(() => null))),
-				this.api('/discover/tv', {
-					with_genres: '16',
-					with_original_language: 'ja',
-					sort_by: 'popularity.desc',
-					page: 1
-				}).catch(() => ({
-					results: []
-				}))
+				Promise.all(['213', '1024', '2739', '2552', '453', '6703', '3186', '4330', '3353', '1112', '318', '67'].map(nid => this.api('/network/' + nid, {}).catch(() => null)))
 			]);
-			const mItems = [...(m1.results || []), ...(m2.results || [])].filter(i => i.poster_path && !this.isBlocked(i, 'movie')).slice(0, 24);
-			const sItems = [...(s1.results || []), ...(s2.results || [])].filter(i => i.poster_path && !this.isBlocked(i, 'tv')).slice(0, 24);
-			const anItems = (an.results || []).filter(i => !this.isBlocked(i, 'tv')).slice(0, 6);
-			const [movieDetails, tvDetails, animeDetails] = await Promise.all([
-				Promise.all(mItems.slice(0, 10).map(m => this.api('/movie/' + m.id, {}).catch(() => null))),
-				Promise.all(sItems.slice(0, 8).map(s => this.api('/tv/' + s.id, {}).catch(() => null))),
-				Promise.all(anItems.map(a => this.api('/tv/' + a.id, {}).catch(() => null)))
-			]);
+			const mItems = (m1.results || []).filter(i => i.poster_path && !this.isBlocked(i, 'movie')).slice(0, 12);
+			const sItems = (s1.results || []).filter(i => i.poster_path && !this.isBlocked(i, 'tv')).slice(0, 12);
 			const usedPersonIds = new Set();
-			const popPeople = [...(p1.results || []), ...(p2.results || [])];
+			const popPeople = p1.results || [];
 			const actors = [];
-			for (let i = 0; i < popPeople.length && actors.length < 24; i++) {
+			for (let i = 0; i < popPeople.length && actors.length < 12; i++) {
 				const p = popPeople[i];
 				if (p && p.profile_path && !p.adult && p.known_for_department === 'Acting' && !usedPersonIds.has(p.id)) {
 					usedPersonIds.add(p.id);
 					actors.push(IMG_BASE + 'w185' + p.profile_path);
 				}
 			}
-			const personUrls = actors.slice(0, 24);
+			const personUrls = actors.slice(0, 12);
 			const seenLogos = new Set();
-			const addLogo = (pool, path, max) => {
-				if (path && pool.length < max && !seenLogos.has(path)) {
+			const companyUrls = [];
+			(wp || []).forEach(p => {
+				const path = p && p.logo_path;
+				if (path && companyUrls.length < 12 && !seenLogos.has(path)) {
 					seenLogos.add(path);
-					pool.push(IMG_BASE + 'w185' + path);
+					companyUrls.push(IMG_BASE + 'w185' + path);
 				}
-			};
-			const providerLogos = [];
-			const studioLogos = [];
-			const networkLogos = [];
-			const animeLogos = [];
-			(wp || []).forEach(p => addLogo(providerLogos, p && p.logo_path, 14));
-			movieDetails.forEach(md => {
-				if (md && md.production_companies) md.production_companies.forEach(c => addLogo(studioLogos, c && c.logo_path, 10));
 			});
-			tvDetails.forEach(td => {
-				if (td && td.networks) td.networks.forEach(n => addLogo(networkLogos, n && n.logo_path, 10));
-			});
-			animeDetails.forEach(ad => {
-				if (ad && ad.production_companies) ad.production_companies.forEach(c => addLogo(animeLogos, c && c.logo_path, 10));
-			});
-			const netStudioPool = [];
-			const maxNs = Math.max(studioLogos.length, networkLogos.length, animeLogos.length);
-			for (let i = 0; i < maxNs && netStudioPool.length < 10; i++) {
-				if (studioLogos[i] && netStudioPool.length < 10) netStudioPool.push(studioLogos[i]);
-				if (networkLogos[i] && netStudioPool.length < 10) netStudioPool.push(networkLogos[i]);
-				if (animeLogos[i] && netStudioPool.length < 10) netStudioPool.push(animeLogos[i]);
-			}
-			const companyUrls = [...providerLogos.slice(0, 14), ...netStudioPool.slice(0, 10)];
 			const chunkList = (urls) => {
 				const unique = [...new Set((urls || []).filter(Boolean))];
 				let sets = [];
-				for (let i = 0; i < unique.length; i += 6) {
-					const chunk = unique.slice(i, i + 6);
-					if (chunk.length >= 6) sets.push(chunk);
+				for (let i = 0; i < unique.length; i += 4) {
+					const chunk = unique.slice(i, i + 4);
+					if (chunk.length >= 4) sets.push(chunk);
 				}
 				return sets;
 			};
@@ -306,7 +258,7 @@ Object.assign(app, {
 				company: chunkList(companyUrls),
 				person: chunkList(personUrls)
 			};
-			this.$storeSet('str_c_exploresets_v6', this.exploreSets);
+			this.$storeSet('str_c_exploresets_v7', this.exploreSets);
 			if (this.exploreSets.movie.length > 0) mCol.innerHTML = makeGrid(this.exploreSets.movie[0]);
 			if (this.exploreSets.tv.length > 0) sCol.innerHTML = makeGrid(this.exploreSets.tv[0]);
 			if (this.exploreSets.company.length > 0) cCol.innerHTML = makeGrid(this.exploreSets.company[0], true);
@@ -1792,6 +1744,7 @@ Object.assign(app, {
 					return this.buildCard(c, type);
 				}).join('');
 				this.markImgsLoaded(grid.querySelectorAll('img'));
+				this.bindPersonTvCardClicks();
 			}
 		}
 		this.updatePersonFilterToggleUI();
@@ -2500,15 +2453,99 @@ Object.assign(app, {
 			}
 			let scans = 0;
 			const maxScans = (roles.length > 0 || countries.length > 0) ? 2 : 1;
+			const mixRegional = (pg >= 2 && countries.length === 0 && (roles.length === 0 || roles.includes('Acting')));
+			const fetchRegionalMix = async () => {
+				if (!mixRegional) return {
+					kr: [],
+					jp: []
+				};
+				try {
+					const discPg = Math.ceil((pg - 1) / 3);
+					const slot = ((pg - 2) % 3) * 2;
+					const [krTv, krMov, jpAni] = await Promise.all([
+						this.api('/discover/tv', {
+							with_origin_country: 'KR',
+							sort_by: 'popularity.desc',
+							page: discPg
+						}, key).catch(() => ({
+							results: []
+						})),
+						this.api('/discover/movie', {
+							with_origin_country: 'KR',
+							sort_by: 'popularity.desc',
+							page: discPg
+						}, key).catch(() => ({
+							results: []
+						})),
+						this.api('/discover/tv', {
+							with_genres: '16',
+							with_original_language: 'ja',
+							sort_by: 'popularity.desc',
+							page: discPg
+						}, key).catch(() => ({
+							results: []
+						}))
+					]);
+					if (currentReqId !== this.exploreReqId) return {
+						kr: [],
+						jp: []
+					};
+					const krTargets = [];
+					if (krTv?.results?.[slot]?.id) krTargets.push('/tv/' + krTv.results[slot].id + '/aggregate_credits');
+					if (krMov?.results?.[slot]?.id) krTargets.push('/movie/' + krMov.results[slot].id + '/credits');
+					const jpTargets = [];
+					if (jpAni?.results?.[slot]?.id) jpTargets.push('/tv/' + jpAni.results[slot].id + '/aggregate_credits');
+					if (jpAni?.results?.[slot + 1]?.id) jpTargets.push('/tv/' + jpAni.results[slot + 1].id + '/aggregate_credits');
+					const [krCreds, jpCreds] = await Promise.all([
+						Promise.all(krTargets.map(u => this.api(u, {}, key).catch(() => null))),
+						Promise.all(jpTargets.map(u => this.api(u, {}, key).catch(() => null)))
+					]);
+					const pickActors = (credsList, ctryCode, limit) => {
+						const out = [];
+						const localSeen = new Set();
+						for (const cr of (credsList || [])) {
+							for (const p of (cr?.cast || [])) {
+								if (!p || !p.id || !p.profile_path || p.adult) continue;
+								const pid = String(p.id);
+								if (this.exploreSeenIds.has(pid) || localSeen.has(pid)) continue;
+								localSeen.add(pid);
+								out.push({
+									...p,
+									known_for_department: p.known_for_department || 'Acting',
+									_country: ctryCode
+								});
+								if (out.length >= limit) return out;
+							}
+						}
+						return out;
+					};
+					return {
+						kr: pickActors(krCreds, 'KR', 4),
+						jp: pickActors(jpCreds, 'JP', 4)
+					};
+				} catch (e) {
+					return {
+						kr: [],
+						jp: []
+					};
+				}
+			};
 			while (collected.length < 20 && scans < maxScans) {
 				scans++;
 				this._personExploreRawPage = (this._personExploreRawPage || 0) + 1;
-				const res = await this.api(ep, {
-					page: this._personExploreRawPage
-				}, key).catch(() => null);
+				const [res, regMix] = await Promise.all([
+					this.api(ep, {
+						page: this._personExploreRawPage
+					}, key).catch(() => null),
+					(scans === 1 && mixRegional) ? fetchRegionalMix() : Promise.resolve({
+						kr: [],
+						jp: []
+					})
+				]);
 				if (currentReqId !== this.exploreReqId) return;
 				const rawList = (res && res.results) || [];
-				const pool = (scans === 1 && candidates.length > 0) ? [...candidates, ...rawList] : rawList;
+				const basePool = (scans === 1 && candidates.length > 0) ? [...candidates, ...rawList] : rawList;
+				const pool = (scans === 1 && (regMix.kr.length > 0 || regMix.jp.length > 0)) ? this.zipInterleave([basePool, regMix.kr, regMix.jp]) : basePool;
 				const filtered = pool.filter(p => {
 					if (!p || !p.id || !p.profile_path || p.adult) return false;
 					const pid = String(p.id);
@@ -3439,7 +3476,10 @@ Object.assign(app, {
 		if (tEl) tEl.innerText = titleMap[this.exploreType] || 'Movies';
 		['tv', 'movie', 'company', 'person'].forEach(k => {
 			const sw = this.$g('explore-switch-' + k);
-			if (sw) sw.style.display = (k === this.exploreType) ? 'none' : '';
+			if (sw) {
+				sw.style.display = '';
+				sw.classList.toggle('active', k === this.exploreType);
+			}
 		});
 		const grid = this.$g('explore-grid');
 		if (!this.exploreSeenIds || this.explorePage === 1) {
@@ -5754,9 +5794,13 @@ Object.assign(app, {
 		const el = this.$g('si-cast-title');
 		if (!el) return;
 		const isExp = (this.castViewMode || 'min') === 'pic';
+		const isTv = Boolean(this.currentShow && (this.currentShow.media_type === 'tv' || this.currentShow.type === 'tv' || (!this.currentShow.title && this.currentShow.name)));
+		const label = isTv ? 'Top Cast' : 'Cast';
 		let iconSpan = el.querySelector('.si-cast-toggle-icon');
 		if (!iconSpan) {
-			el.innerHTML = '<span>Cast</span><span class="si-cast-toggle-icon">' + EXPAND_DOWN_SVG(18, 18) + '</span>';
+			el.innerHTML = '<span>' + label + '</span><span class="si-cast-toggle-icon">' + EXPAND_DOWN_SVG(18, 18) + '</span>';
+		} else if (el.firstElementChild && el.firstElementChild.tagName === 'SPAN') {
+			el.firstElementChild.textContent = label;
 		}
 		el.classList.toggle('is-expanded', isExp);
 	},
@@ -6038,7 +6082,16 @@ Object.assign(app, {
 			sel.style.display = 'none';
 		}
 		if (this.currentShowSeasonList && this.currentShowSeasonList.length > 0) {
-			if (!window.history.state || window.history.state.sub !== 'episodes' || window.history.state.season !== sNum) {
+			if (this._skipEpHistoryPush) {
+				this._skipEpHistoryPush = false;
+				window.history.replaceState({
+					view: 'showinfo',
+					id: this.currentShow.id,
+					type: this.currentShow.media_type || 'tv',
+					sub: 'episodes',
+					season: sNum
+				}, document.title, window.location.href);
+			} else if (!window.history.state || window.history.state.sub !== 'episodes' || window.history.state.season !== sNum) {
 				window.history.pushState({
 					view: 'showinfo',
 					id: this.currentShow.id,
@@ -6438,13 +6491,19 @@ Object.assign(app, {
 			this.pendingSeasonAnchorScroll = false;
 			requestAnimationFrame(() => {
 				setTimeout(() => {
-					const targetEl = document.querySelector('#si-ep-grid .ep-card.resume-ep') || this.$g('si-episodes-section');
+					const targetEl = document.querySelector('#si-ep-grid .ep-card.highlighted-ep') || document.querySelector('#si-ep-grid .ep-card.resume-ep') || this.$g('si-episodes-section');
 					if (targetEl) {
 						targetEl.scrollIntoView({
-							behavior: 'auto',
+							behavior: 'smooth',
 							block: 'center'
 						});
+						if (targetEl.classList.contains('highlighted-ep')) {
+							setTimeout(() => {
+								targetEl.classList.remove('highlighted-ep');
+							}, 2000);
+						}
 					}
+					this.pendingHighlightEpisode = null;
 					setTimeout(() => {
 						this.showSiScrollOverlay(false);
 					}, 120);
@@ -6544,11 +6603,18 @@ Object.assign(app, {
 		const totalPages = Math.ceil(eps.length / 50);
 		let curPage = parseInt(page, 10);
 		if (!curPage) {
-			const hist = this.getHistory();
-			const showInHist = hist.find(x => String(x.id) === String(this.currentShow?.id));
-			if (showInHist && (showInHist.last_season === sNum || showInHist.last_hybrid_season === sNum || (sCfg && sCfg._tmdbSeason !== undefined && showInHist.last_season === sCfg._tmdbSeason)) && showInHist.last_episode) {
-				const epIdx = eps.findIndex(e => e.episode_number === showInHist.last_episode);
-				if (epIdx !== -1) curPage = Math.floor(epIdx / 50) + 1;
+			const hi = this.pendingHighlightEpisode;
+			if (hi && String(hi.showId) === String(this.currentShow?.id) && Number(hi.season) === Number(sNum) && hi.episode) {
+				const hiIdx = eps.findIndex(e => Number(e.episode_number) === Number(hi.episode));
+				if (hiIdx !== -1) curPage = Math.floor(hiIdx / 50) + 1;
+			}
+			if (!curPage) {
+				const hist = this.getHistory();
+				const showInHist = hist.find(x => String(x.id) === String(this.currentShow?.id));
+				if (showInHist && (showInHist.last_season === sNum || showInHist.last_hybrid_season === sNum || (sCfg && sCfg._tmdbSeason !== undefined && showInHist.last_season === sCfg._tmdbSeason)) && showInHist.last_episode) {
+					const epIdx = eps.findIndex(e => e.episode_number === showInHist.last_episode);
+					if (epIdx !== -1) curPage = Math.floor(epIdx / 50) + 1;
+				}
 			}
 			if (!curPage) curPage = 1;
 		}
@@ -6597,8 +6663,12 @@ Object.assign(app, {
 			const epPrefix = (isSpecialGroup || epSeason === 0) ? `E${epNumber}` : `S${epSeason} E${epNumber}`;
 			const isSpecialOrOva = Boolean(isSpecialGroup || epSeason === 0 || (sCfg && (sCfg._isSpecialGroup || sCfg._isSpecial || sCfg.format === 'SPECIAL' || sCfg.format === 'OVA')) || (isAnimeShow && (this.currentShow?.format === 'OVA' || this.currentShow?.format === 'SPECIAL' || this.currentShow?.type === 'OVA' || this.currentShow?.type === 'Special' || animeInfo?.animeFormat === 'OVA' || animeInfo?.animeFormat === 'SPECIAL')));
 			const titleText = isSpecialOrOva ? (ep.name || `Episode ${epNumber}`) : `${epPrefix} - ${ep.name}`;
+			const hi = this.pendingHighlightEpisode;
+			const isHighlightedEp = Boolean(hi && String(hi.showId) === String(this.currentShow?.id) && Number(hi.season) === Number(sNum) && Number(hi.episode) === Number(ep.episode_number));
 			const isLastPlayed = Boolean(showInHist && Number(showInHist.last_season) === Number(watchSeason) && Number(showInHist.last_episode) === Number(ep.episode_number) && (showInHist.last_hybrid_season === undefined || showInHist.last_hybrid_season === null || Number(showInHist.last_hybrid_season) === Number(sNum)));
-			return `<div class="ep-card${isLastPlayed ? ' resume-ep' : ''}" onclick="app.openWatch('${this.currentShow.id}','tv',${watchSeason},${ep.episode_number},true,false,${sNum})"><img src="${img}" class="ep-img" loading="lazy"><div class="ep-info"><div class="ep-title">${titleText}</div>${metaHtml}<div class="ep-desc">${ep.overview || ''}</div></div></div>`;
+			const epCls = 'ep-card' + (isLastPlayed ? ' resume-ep' : '') + (isHighlightedEp ? ' highlighted-ep' : '');
+			const castBtnHtml = '<button type="button" class="ep-cast-btn" title="Episode Cast" aria-label="Episode Cast" onclick="event.stopPropagation();app.openEpisodeCastModal(\'' + this.currentShow.id + '\',' + watchSeason + ',' + ep.episode_number + ',this)">' + PICTURE_SVG + '</button>';
+			return '<div class="' + epCls + '" onclick="app.openWatch(\'' + this.currentShow.id + '\',\'tv\',' + watchSeason + ',' + ep.episode_number + ',true,false,' + sNum + ')"><img src="' + img + '" class="ep-img" loading="lazy"><div class="ep-info"><div class="ep-title-row"><div class="ep-title">' + titleText + '</div>' + castBtnHtml + '</div>' + metaHtml + '<div class="ep-desc">' + (ep.overview || '') + '</div></div></div>';
 		}).join('');
 		const pag = this.$g('si-ep-pagination');
 		const epSec = this.$g('si-episodes-section');
@@ -7501,6 +7571,13 @@ Object.assign(app, {
 			pTitlesHeading.textContent = '';
 			pTitlesHeading.style.display = 'none';
 		}
+		const pRoleWrap = this.$g('person-role-select-wrap');
+		if (pRoleWrap) pRoleWrap.style.display = 'none';
+		const pRoleSub = this.$g('person-role-subheading');
+		if (pRoleSub) {
+			pRoleSub.textContent = '';
+			pRoleSub.style.display = 'none';
+		}
 		const pHeaderActions = this.$g('person-header-actions');
 		if (pHeaderActions) pHeaderActions.style.display = 'none';
 		const cacheKey = `person_${personId}`;
@@ -7560,94 +7637,20 @@ Object.assign(app, {
 		});
 		const profileImgPromise = p.profile_path ? preloadImg(this.getImg(p.profile_path, 'poster'), 850) : Promise.resolve(false);
 
-		let birthYear = 0;
-		if (p && p.birthday) {
-			const bMatch = String(p.birthday).match(/^(\d{4})/);
-			if (bMatch) birthYear = parseInt(bMatch[1], 10);
+		this.resolvePersonRoles(cached.credits);
+		const roles = this.personAvailableRoles || [];
+		let activeRole = this.currentPersonDept || 'Acting';
+		const matchedRole = roles.find(r => r.toLowerCase() === activeRole.toLowerCase());
+		if (matchedRole) {
+			activeRole = matchedRole;
+		} else if (roles.length > 0) {
+			activeRole = roles[0];
 		}
-		let targetCredits = [];
-		const searchDept = (this.currentPersonDept || 'Acting').toLowerCase();
-		if (searchDept === 'acting') {
-			targetCredits = (cached.credits && Array.isArray(cached.credits.cast)) ? cached.credits.cast : [];
-		} else if (cached.credits && Array.isArray(cached.credits.crew)) {
-			if (searchDept === 'writing') {
-				targetCredits = cached.credits.crew.filter(c => c && (String(c.department || '').toLowerCase() === 'writing' || /^(?:writer|screenplay|story|characters?|teleplay)\b/i.test(c.job || '')));
-			} else if (searchDept === 'directing') {
-				targetCredits = cached.credits.crew.filter(c => c && (String(c.department || '').toLowerCase() === 'directing' || /^(?:director|co-director)\b/i.test(c.job || '')));
-			} else if (searchDept === 'creator') {
-				targetCredits = cached.credits.crew.filter(c => c && (String(c.department || '').toLowerCase() === 'creator' || /creator/i.test(c.job || '')));
-			} else {
-				targetCredits = cached.credits.crew.filter(c => c && (String(c.department || '').toLowerCase() === searchDept || String(c.job || '').toLowerCase() === searchDept));
-			}
-		}
-		const tvCreditsToResolve = targetCredits.filter(c => {
-			const type = c.media_type || (c.title ? 'movie' : 'tv');
-			return type === 'tv' && c.credit_id && !c.earliest_air_date && !c.credit_no_year;
-		});
-		if (tvCreditsToResolve.length > 0) {
-			const key = this.getTmdbAnimeKey();
-			try {
-				const batch = tvCreditsToResolve.slice(0, 12);
-				const fetchPromises = batch.map(c => this.api('/credit/' + c.credit_id, {}, key).catch(() => null));
-				const creditDetails = await Promise.race([
-					Promise.all(fetchPromises),
-					new Promise(resolve => setTimeout(() => resolve([]), 650))
-				]);
-				if (Array.isArray(creditDetails)) {
-					creditDetails.forEach((res, i) => {
-						if (res && res.media && batch[i]) {
-							let regularEpAirDate = '';
-							let specialEpAirDate = '';
-							if (Array.isArray(res.media.episodes)) {
-								for (const ep of res.media.episodes) {
-									if (ep && ep.air_date && typeof ep.air_date === 'string' && ep.air_date.length >= 4) {
-										if (ep.season_number !== 0) {
-											if (!regularEpAirDate || ep.air_date < regularEpAirDate) regularEpAirDate = ep.air_date;
-										} else {
-											if (!specialEpAirDate || ep.air_date < specialEpAirDate) specialEpAirDate = ep.air_date;
-										}
-									}
-								}
-							}
-							let regularSeaAirDate = '';
-							let specialSeaAirDate = '';
-							let hasSeason1 = false;
-							let hasOnlyLaterSeasons = false;
-							if (Array.isArray(res.media.seasons)) {
-								let nonZeroCount = 0;
-								let laterSeasonCount = 0;
-								for (const sea of res.media.seasons) {
-									if (sea) {
-										if (sea.season_number === 1) hasSeason1 = true;
-										if (sea.season_number > 1) laterSeasonCount++;
-										if (sea.season_number !== 0) nonZeroCount++;
-										if (sea.air_date && typeof sea.air_date === 'string' && sea.air_date.length >= 4) {
-											if (sea.season_number !== 0) {
-												if (!regularSeaAirDate || sea.air_date < regularSeaAirDate) regularSeaAirDate = sea.air_date;
-											} else {
-												if (!specialSeaAirDate || sea.air_date < specialSeaAirDate) specialSeaAirDate = sea.air_date;
-											}
-										}
-									}
-								}
-								if (nonZeroCount > 0 && laterSeasonCount === nonZeroCount && !hasSeason1) {
-									hasOnlyLaterSeasons = true;
-								}
-							}
-							let airDate = regularEpAirDate || regularSeaAirDate || specialEpAirDate || specialSeaAirDate || '';
-							if (!airDate && !hasOnlyLaterSeasons) {
-								airDate = res.media.first_air_date || res.media.air_date || '';
-							}
-							if (airDate) {
-								batch[i].earliest_air_date = airDate;
-							} else if (hasOnlyLaterSeasons) {
-								batch[i].credit_no_year = true;
-							}
-						}
-					});
-				}
-			} catch (err) {}
-		}
+		this.currentPersonDept = activeRole;
+		if (filmHeading) filmHeading.textContent = (roles.length > 1) ? 'Filmography' : ((activeRole === 'Acting' || !activeRole) ? 'Filmography' : activeRole);
+		this.syncPersonRoleUI(roles, activeRole);
+		const targetCredits = (this.personCreditsByRole && this.personCreditsByRole[activeRole]) ? this.personCreditsByRole[activeRole] : [];
+		await this.resolvePersonTvCreditYears(targetCredits);
 		if (this.currentView !== 'person' || String(this.currentPersonId) !== String(personId)) return;
 		this.personCredits = targetCredits;
 		this.renderPersonFilmography(targetCredits);
@@ -7682,6 +7685,166 @@ Object.assign(app, {
 			this.restoreScroll(this.personScrollPos);
 			this.personScrollPos = 0;
 		}
+	},
+	resolvePersonRoles: function(credits) {
+		const byRole = {};
+		const seenByRole = {};
+		const addCredit = (roleName, c) => {
+			if (!c || !c.id || !c.poster_path) return;
+			const type = c.media_type || (c.title ? 'movie' : 'tv');
+			if (type !== 'movie' && type !== 'tv') return;
+			if (this.isBlocked && this.isBlocked(c, type)) return;
+			if (!byRole[roleName]) {
+				byRole[roleName] = [];
+				seenByRole[roleName] = new Set();
+			}
+			const key = `${type}_${c.id}`;
+			if (seenByRole[roleName].has(key)) return;
+			seenByRole[roleName].add(key);
+			byRole[roleName].push(c);
+		};
+		if (credits && Array.isArray(credits.cast)) {
+			credits.cast.forEach(c => addCredit('Acting', c));
+		}
+		if (credits && Array.isArray(credits.crew)) {
+			credits.crew.forEach(c => {
+				if (!c) return;
+				const rawDept = String(c.department || '').trim();
+				const rawJob = String(c.job || '').trim();
+				let roleName = rawDept;
+				if (rawDept.toLowerCase() === 'creator' || /creator/i.test(rawJob)) {
+					roleName = 'Creator';
+				} else if (rawDept.toLowerCase() === 'writing' || /^(?:writer|screenplay|story|characters?|teleplay)\b/i.test(rawJob)) {
+					roleName = 'Writing';
+				} else if (rawDept.toLowerCase() === 'directing' || /^(?:director|co-director)\b/i.test(rawJob)) {
+					roleName = 'Directing';
+				} else if (!roleName) {
+					roleName = rawJob || 'Crew';
+				}
+				addCredit(roleName, c);
+			});
+		}
+		const roles = Object.keys(byRole).sort((a, b) => {
+			const diff = byRole[b].length - byRole[a].length;
+			if (diff !== 0) return diff;
+			if (a === 'Acting') return -1;
+			if (b === 'Acting') return 1;
+			return a.localeCompare(b);
+		});
+		this.personCreditsByRole = byRole;
+		this.personAvailableRoles = roles;
+		return roles;
+	},
+	syncPersonRoleUI: function(roles, activeRole) {
+		const wrap = this.$g('person-role-select-wrap');
+		const sel = this.$g('person-role-select');
+		const sub = this.$g('person-role-subheading');
+		const hasMulti = Array.isArray(roles) && roles.length > 1;
+		if (wrap && sel) {
+			if (hasMulti) {
+				sel.innerHTML = roles.map(r => '<option value="' + r.replace(/"/g, '&quot;') + '"' + (r === activeRole ? ' selected' : '') + '>' + r + '</option>').join('');
+				wrap.style.display = 'inline-flex';
+			} else {
+				sel.innerHTML = '';
+				wrap.style.display = 'none';
+			}
+		}
+		if (sub) {
+			if (hasMulti && activeRole) {
+				sub.textContent = activeRole;
+				sub.style.display = 'block';
+			} else {
+				sub.textContent = '';
+				sub.style.display = 'none';
+			}
+		}
+	},
+	resolvePersonTvCreditYears: async function(targetCredits) {
+		const tvCreditsToResolve = (targetCredits || []).filter(c => {
+			const type = c.media_type || (c.title ? 'movie' : 'tv');
+			return type === 'tv' && c.credit_id && !c.earliest_air_date && !c.credit_no_year;
+		});
+		if (tvCreditsToResolve.length === 0) return;
+		const key = this.getTmdbAnimeKey();
+		try {
+			const batch = tvCreditsToResolve.slice(0, 12);
+			const fetchPromises = batch.map(c => this.api('/credit/' + c.credit_id, {}, key).catch(() => null));
+			const creditDetails = await Promise.race([
+				Promise.all(fetchPromises),
+				new Promise(resolve => setTimeout(() => resolve([]), 650))
+			]);
+			if (Array.isArray(creditDetails)) {
+				creditDetails.forEach((res, i) => {
+					if (res && res.media && batch[i]) {
+						let regularEpAirDate = '';
+						let specialEpAirDate = '';
+						if (Array.isArray(res.media.episodes)) {
+							for (const ep of res.media.episodes) {
+								if (ep && ep.air_date && typeof ep.air_date === 'string' && ep.air_date.length >= 4) {
+									if (ep.season_number !== 0) {
+										if (!regularEpAirDate || ep.air_date < regularEpAirDate) regularEpAirDate = ep.air_date;
+									} else {
+										if (!specialEpAirDate || ep.air_date < specialEpAirDate) specialEpAirDate = ep.air_date;
+									}
+								}
+							}
+						}
+						let regularSeaAirDate = '';
+						let specialSeaAirDate = '';
+						let hasSeason1 = false;
+						let hasOnlyLaterSeasons = false;
+						if (Array.isArray(res.media.seasons)) {
+							let nonZeroCount = 0;
+							let laterSeasonCount = 0;
+							for (const sea of res.media.seasons) {
+								if (sea) {
+									if (sea.season_number === 1) hasSeason1 = true;
+									if (sea.season_number > 1) laterSeasonCount++;
+									if (sea.season_number !== 0) nonZeroCount++;
+									if (sea.air_date && typeof sea.air_date === 'string' && sea.air_date.length >= 4) {
+										if (sea.season_number !== 0) {
+											if (!regularSeaAirDate || sea.air_date < regularSeaAirDate) regularSeaAirDate = sea.air_date;
+										} else {
+											if (!specialSeaAirDate || sea.air_date < specialSeaAirDate) specialSeaAirDate = sea.air_date;
+										}
+									}
+								}
+							}
+							if (nonZeroCount > 0 && laterSeasonCount === nonZeroCount && !hasSeason1) {
+								hasOnlyLaterSeasons = true;
+							}
+						}
+						let airDate = regularEpAirDate || regularSeaAirDate || specialEpAirDate || specialSeaAirDate || '';
+						if (!airDate && !hasOnlyLaterSeasons) {
+							airDate = res.media.first_air_date || res.media.air_date || '';
+						}
+						if (airDate) {
+							batch[i].earliest_air_date = airDate;
+						} else if (hasOnlyLaterSeasons) {
+							batch[i].credit_no_year = true;
+						}
+					}
+				});
+			}
+		} catch (err) {}
+	},
+	setPersonCreditRole: async function(role) {
+		if (!role || !this.personCreditsByRole || !this.personCreditsByRole[role]) return;
+		this.currentPersonDept = role;
+		this.personTypeFilter = 'all';
+		const pfbAll = this.$g('pfb-all');
+		const pfbMov = this.$g('pfb-movie');
+		const pfbTv = this.$g('pfb-tv');
+		if (pfbAll) pfbAll.classList.add('active');
+		if (pfbMov) pfbMov.classList.remove('active');
+		if (pfbTv) pfbTv.classList.remove('active');
+		const filmHeading = this.$g('person-filmography-title');
+		if (filmHeading) filmHeading.textContent = (this.personAvailableRoles && this.personAvailableRoles.length > 1) ? 'Filmography' : ((role === 'Acting' || !role) ? 'Filmography' : role);
+		this.syncPersonRoleUI(this.personAvailableRoles, role);
+		const targetCredits = this.personCreditsByRole[role] || [];
+		await this.resolvePersonTvCreditYears(targetCredits);
+		this.personCredits = targetCredits;
+		this.renderPersonFilmography(targetCredits);
 	},
 	renderPersonFilmography: function(creditsList) {
 		const grid = this.$g('person-filmography-grid');
@@ -7898,6 +8061,348 @@ Object.assign(app, {
 		grid.insertAdjacentHTML('beforeend', cardsHtml);
 		this.personRenderedCount += nextBatch.length;
 		this.markImgsLoaded(grid.querySelectorAll('img'));
+		this.bindPersonTvCardClicks();
+	},
+	bindPersonTvCardClicks: function() {
+		const grid = this.$g('person-filmography-grid');
+		if (!grid) return;
+		const credits = this.personFilteredCredits || this.personAllCredits || [];
+		const allCards = Array.from(grid.querySelectorAll('.poster-card'));
+		allCards.forEach((card, idx) => {
+			if (card.dataset.showType !== 'tv' || card.dataset.peBound === '1') return;
+			card.dataset.peBound = '1';
+			const sid = card.dataset.showId;
+			const idxCredit = (credits[idx] && String(credits[idx].id) === String(sid)) ? credits[idx] : null;
+			const exactCredit = idxCredit || credits.find(c => String(c.id) === String(sid)) || null;
+			card.onclick = (e) => {
+				if (e.target && e.target.closest('.bookmark-btn')) return;
+				this.openPersonEpisodesModal(sid, exactCredit);
+			};
+		});
+	},
+	openPersonEpisodesModal: async function(tvId, credit = null) {
+		const modal = this.$g('person-ep-modal');
+		if (!modal || !tvId) return;
+		const reqId = (this._peReqId = (this._peReqId || 0) + 1);
+		const posterEl = this.$g('pe-poster');
+		const titleEl = this.$g('pe-title');
+		const subEl = this.$g('pe-sub');
+		const seasonsRow = this.$g('pe-seasons-row');
+		const seasonLabelEl = modal.querySelector('.pe-season-label');
+		const seasonContainerEl = modal.querySelector('.pe-seasons-container');
+		const epListEl = this.$g('pe-ep-list');
+		const loaderEl = this.$g('pe-loader');
+		if (seasonLabelEl) seasonLabelEl.style.display = '';
+		if (seasonContainerEl) seasonContainerEl.style.display = '';
+		const showName = (credit && (credit.name || credit.title)) || 'Show';
+		const posterPath = (credit && credit.poster_path) || '';
+		if (posterEl) {
+			if (posterPath) {
+				posterEl.src = this.getImg(posterPath, 'poster');
+				posterEl.style.opacity = '1';
+				posterEl.style.visibility = 'visible';
+				posterEl.style.display = 'block';
+				this.markImgsLoaded([posterEl]);
+			} else {
+				posterEl.removeAttribute('src');
+				posterEl.style.display = 'none';
+			}
+		}
+		if (titleEl) titleEl.innerHTML = '<span>' + showName + '</span><span class="pe-title-arrow">&#8250;</span>';
+		const epCnt = (credit && typeof credit.episode_count === 'number' && credit.episode_count > 0) ? (credit.episode_count === 1 ? '1 episode' : credit.episode_count + ' episodes') : '';
+		const yrInit = (credit && credit.actingYear) ? credit.actingYear : '';
+		if (subEl) subEl.textContent = [epCnt, yrInit].filter(Boolean).join(' • ');
+		if (seasonsRow) seasonsRow.innerHTML = '';
+		if (epListEl) epListEl.innerHTML = '';
+		if (loaderEl) loaderEl.style.display = 'flex';
+		this._peState = {
+			tvId: String(tvId),
+			credit,
+			roleText: (credit && (credit.character || credit.job)) || '',
+			isMainCast: false,
+			seasons: [],
+			epMap: null,
+			activeSeason: 1,
+			showData: null
+		};
+		modal.classList.add('active');
+		document.body.classList.add('modal-open');
+		try {
+			const key = this.getTmdbMediaKey();
+			const creditReq = (credit && credit.credit_id) ? this.api('/credit/' + credit.credit_id, {}, key).catch(() => null) : Promise.resolve(null);
+			const [showData, credData, creditDetail] = await Promise.all([
+				this.api('/tv/' + tvId, {}, key).catch(() => null),
+				this.api('/tv/' + tvId + '/credits', {}, key).catch(() => null),
+				creditReq
+			]);
+			if (reqId !== this._peReqId || !modal.classList.contains('active')) return;
+			if (!showData || !showData.id) {
+				if (loaderEl) loaderEl.style.display = 'none';
+				if (epListEl) epListEl.innerHTML = '<div class="pe-empty">Unable to load show details.</div>';
+				return;
+			}
+			if (posterEl && showData.poster_path) {
+				posterEl.src = this.getImg(showData.poster_path, 'poster');
+				posterEl.style.opacity = '1';
+				posterEl.style.visibility = 'visible';
+				posterEl.style.display = 'block';
+				this.markImgsLoaded([posterEl]);
+			}
+			if (titleEl) titleEl.innerHTML = '<span>' + (showData.name || showData.title || showName) + '</span><span class="pe-title-arrow">&#8250;</span>';
+			const firstYr = (showData.first_air_date || '').substring(0, 4);
+			const lastYr = (showData.last_air_date || '').substring(0, 4);
+			const yrRange = firstYr ? (lastYr && lastYr !== firstYr ? firstYr + '–' + lastYr : firstYr) : yrInit;
+			const totalEpTxt = epCnt || (showData.number_of_episodes ? showData.number_of_episodes + ' episodes' : '');
+			if (subEl) subEl.textContent = [totalEpTxt, yrRange].filter(Boolean).join(' • ');
+			const pid = String(this.currentPersonId || '');
+			const inMainCast = Boolean((credData?.cast || []).some(m => String(m.id) === pid));
+			const highEpCount = Boolean(credit && typeof credit.episode_count === 'number' && showData.number_of_episodes && credit.episode_count >= Math.min(12, Math.max(4, Math.round(showData.number_of_episodes * 0.35))));
+			const isMainCast = inMainCast || highEpCount;
+			let allAiredSeasons = (showData.seasons || []).filter(s => s && s.season_number > 0 && this.isSeasonAired(s));
+			if (allAiredSeasons.length === 0) allAiredSeasons = (showData.seasons || []).filter(s => s && s.season_number > 0);
+			if (allAiredSeasons.length === 0 && showData.seasons && showData.seasons.length > 0) allAiredSeasons = showData.seasons;
+			const epMap = {};
+			const creditMediaEps = (creditDetail && creditDetail.media && Array.isArray(creditDetail.media.episodes)) ? creditDetail.media.episodes : [];
+			if (creditMediaEps.length > 0) {
+				const hasPosSeason = creditMediaEps.some(ep => ep && Number(ep.season_number) > 0);
+				const filteredEps = creditMediaEps.filter(ep => ep && (hasPosSeason ? Number(ep.season_number) > 0 : Number(ep.season_number) >= 0));
+				filteredEps.forEach(ep => {
+					const sNum = Number(ep.season_number);
+					if (!epMap[sNum]) epMap[sNum] = [];
+					if (!epMap[sNum].some(x => Number(x.episode_number) === Number(ep.episode_number))) epMap[sNum].push(ep);
+				});
+				Object.keys(epMap).forEach(k => {
+					epMap[k].sort((a, b) => Number(a.episode_number) - Number(b.episode_number));
+				});
+			}
+			const creditMediaSeasons = (creditDetail && creditDetail.media && Array.isArray(creditDetail.media.seasons)) ? creditDetail.media.seasons : [];
+			const hasPosCreditSeason = creditMediaSeasons.some(s => s && Number(s.season_number) > 0);
+			const creditSeasonNums = Array.from(new Set(creditMediaSeasons.filter(s => s && (hasPosCreditSeason ? Number(s.season_number) > 0 : Number(s.season_number) >= 0)).map(s => Number(s.season_number)))).sort((a, b) => a - b);
+			let tier2Seasons = null;
+			const missingCreditSeasons = creditSeasonNums.filter(n => !epMap[n]);
+			if (missingCreditSeasons.length > 0) {
+				if (isMainCast && Object.keys(epMap).length === 0) {
+					tier2Seasons = creditSeasonNums.map(n => allAiredSeasons.find(s => Number(s.season_number) === n) || {
+						season_number: n
+					});
+				} else {
+					for (let i = 0; i < missingCreditSeasons.length; i += 5) {
+						const batch = missingCreditSeasons.slice(i, i + 5);
+						const batchRes = await Promise.all(batch.map(n => this.api('/tv/' + tvId + '/season/' + n, {}, key).catch(() => null)));
+						if (reqId !== this._peReqId || !modal.classList.contains('active')) return;
+						batch.forEach((n, bi) => {
+							const sData = batchRes[bi];
+							const rawEps = (sData && Array.isArray(sData.episodes)) ? sData.episodes : [];
+							const matched = pid ? rawEps.filter(ep => (ep.guest_stars || []).some(g => String(g.id) === pid) || (ep.crew || []).some(cr => String(cr.id) === pid)) : [];
+							if (matched.length > 0) epMap[n] = matched;
+							else if (rawEps.length > 0) epMap[n] = rawEps;
+						});
+					}
+				}
+			}
+			if (Object.keys(epMap).length === 0 && !tier2Seasons && !isMainCast && pid && allAiredSeasons.length > 0) {
+				for (let i = 0; i < allAiredSeasons.length; i += 5) {
+					const batch = allAiredSeasons.slice(i, i + 5);
+					const batchRes = await Promise.all(batch.map(s => this.api('/tv/' + tvId + '/season/' + s.season_number, {}, key).catch(() => null)));
+					if (reqId !== this._peReqId || !modal.classList.contains('active')) return;
+					batch.forEach((s, bi) => {
+						const sData = batchRes[bi];
+						const rawEps = (sData && Array.isArray(sData.episodes)) ? sData.episodes : [];
+						const matched = rawEps.filter(ep => (ep.guest_stars || []).some(g => String(g.id) === pid) || (ep.crew || []).some(cr => String(cr.id) === pid));
+						if (matched.length > 0) epMap[s.season_number] = matched;
+					});
+				}
+			}
+			let resolvedSeasons = [];
+			const epMapKeys = Object.keys(epMap).map(Number).sort((a, b) => a - b);
+			if (epMapKeys.length > 0) {
+				resolvedSeasons = epMapKeys.map(n => allAiredSeasons.find(s => Number(s.season_number) === n) || {
+					season_number: n
+				});
+				this._peState.epMap = epMap;
+			} else if (tier2Seasons && tier2Seasons.length > 0) {
+				resolvedSeasons = tier2Seasons;
+			} else if (isMainCast) {
+				resolvedSeasons = allAiredSeasons;
+			}
+			this._peState.showData = showData;
+			this._peState.isMainCast = isMainCast;
+			this._peState.seasons = resolvedSeasons;
+			if (resolvedSeasons.length === 0) {
+				if (seasonLabelEl) seasonLabelEl.style.display = 'none';
+				if (seasonContainerEl) seasonContainerEl.style.display = 'none';
+				if (loaderEl) loaderEl.style.display = 'none';
+				if (epListEl) epListEl.innerHTML = '<div class="pe-empty">No credited episodes found for this title.</div>';
+				return;
+			}
+			const initSeason = resolvedSeasons[0].season_number;
+			this._peState.activeSeason = initSeason;
+			if (seasonsRow) {
+				seasonsRow.innerHTML = resolvedSeasons.map(s => '<button type="button" class="pe-season-btn' + (s.season_number === initSeason ? ' active' : '') + '" data-s="' + s.season_number + '" onclick="app.loadPersonModalSeason(' + s.season_number + ')">' + s.season_number + '</button>').join('');
+				seasonsRow.scrollLeft = 0;
+				this.setupScrollRowArrows();
+				this.checkScrollArrow(seasonsRow);
+			}
+			await this.loadPersonModalSeason(initSeason, reqId);
+		} catch (e) {
+			if (reqId === this._peReqId) {
+				if (loaderEl) loaderEl.style.display = 'none';
+				if (epListEl) epListEl.innerHTML = '<div class="pe-empty">Error loading episodes.</div>';
+			}
+		}
+	},
+	loadPersonModalSeason: async function(seasonNum, parentReqId = null) {
+		const st = this._peState;
+		if (!st || !st.tvId) return;
+		const reqId = parentReqId || (this._peReqId = (this._peReqId || 0) + 1);
+		st.activeSeason = seasonNum;
+		const seasonsRow = this.$g('pe-seasons-row');
+		if (seasonsRow) {
+			seasonsRow.querySelectorAll('.pe-season-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.s) === Number(seasonNum)));
+		}
+		const loaderEl = this.$g('pe-loader');
+		const epListEl = this.$g('pe-ep-list');
+		const pid = String(this.currentPersonId || '');
+		let eps = null;
+		if (st.epMap && Array.isArray(st.epMap[seasonNum])) {
+			eps = st.epMap[seasonNum];
+		} else {
+			if (loaderEl) loaderEl.style.display = 'flex';
+			try {
+				if (st.isMainCast) {
+					const sData = await this.fetchSeasonEpisodes(st.tvId, seasonNum);
+					if (reqId !== this._peReqId) return;
+					eps = (sData && Array.isArray(sData.episodes)) ? sData.episodes : [];
+				} else {
+					const key = this.getTmdbMediaKey();
+					const sData = await this.api('/tv/' + st.tvId + '/season/' + seasonNum, {}, key);
+					if (reqId !== this._peReqId) return;
+					const rawEps = (sData && Array.isArray(sData.episodes)) ? sData.episodes : [];
+					eps = pid ? rawEps.filter(ep => (ep.guest_stars || []).some(g => String(g.id) === pid) || (ep.crew || []).some(cr => String(cr.id) === pid)) : rawEps;
+				}
+			} catch (e) {
+				if (reqId === this._peReqId) {
+					if (loaderEl) loaderEl.style.display = 'none';
+					if (epListEl) epListEl.innerHTML = '<div class="pe-empty">Error loading episodes.</div>';
+				}
+				return;
+			}
+		}
+		if (loaderEl) loaderEl.style.display = 'none';
+		if (!epListEl) return;
+		if (!eps || eps.length === 0) {
+			epListEl.innerHTML = '<div class="pe-empty">No credited appearances in Season ' + seasonNum + '.</div>';
+			return;
+		}
+		const defaultRole = st.roleText || '';
+		epListEl.innerHTML = eps.map(ep => {
+			const epYr = (ep.air_date || '').substring(0, 4);
+			const yrStr = epYr ? ' (' + epYr + ')' : '';
+			let roleStr = defaultRole;
+			if (!st.isMainCast && pid) {
+				const gHit = (ep.guest_stars || []).find(g => String(g.id) === pid);
+				const cHit = (ep.crew || []).find(cr => String(cr.id) === pid);
+				if (gHit && gHit.character) roleStr = gHit.character;
+				else if (cHit && cHit.job) roleStr = cHit.job;
+			}
+			const epName = ep.name || ('Episode ' + ep.episode_number);
+			return '<div class="pe-ep-row clickable" onclick="app.goToEpisodeFromPersonModal(\'' + st.tvId + '\',' + seasonNum + ',' + ep.episode_number + ')"><div class="pe-ep-title">S' + seasonNum + '.E' + ep.episode_number + ' &bull; ' + epName + yrStr + '</div>' + (roleStr ? '<div class="pe-ep-role">' + roleStr + '</div>' : '') + '</div>';
+		}).join('');
+		epListEl.parentElement.scrollTop = 0;
+	},
+	closePersonEpisodesModal: function(e = null, fromPopState = false) {
+		if (e && e.target && e.target.id !== 'person-ep-modal' && !e.target.closest('.pe-close-btn')) return;
+		const modal = this.$g('person-ep-modal');
+		if (!modal || !modal.classList.contains('active')) return;
+		modal.classList.remove('active');
+		this.syncModalOpen();
+	},
+	openShowFromPersonModal: function() {
+		const tvId = this._peState && this._peState.tvId;
+		const modal = this.$g('person-ep-modal');
+		if (modal) modal.classList.remove('active');
+		this.syncModalOpen();
+		if (tvId) this.openShowinfo(tvId, 'tv');
+	},
+	goToEpisodeFromPersonModal: function(tvId, seasonNum, epNum) {
+		const modal = this.$g('person-ep-modal');
+		if (modal) modal.classList.remove('active');
+		this.syncModalOpen();
+		this._skipEpHistoryPush = true;
+		this.pendingHighlightEpisode = {
+			showId: String(tvId),
+			season: Number(seasonNum),
+			episode: Number(epNum)
+		};
+		this.showSeasons[tvId] = Number(seasonNum);
+		this.$storeSet('showSeasons', this.showSeasons);
+		if (this.showEpPages) delete this.showEpPages[`${tvId}_${seasonNum}`];
+		this.openShowinfo(tvId, 'tv', true, false, true, true);
+	},
+	openEpisodeCastModal: async function(tvId, seasonNum, epNum, triggerEl = null) {
+		const modal = this.$g('ep-cast-modal');
+		if (!modal || !tvId) return;
+		const reqId = (this._epcReqId = (this._epcReqId || 0) + 1);
+		const titleEl = this.$g('epc-title');
+		const listEl = this.$g('epc-list');
+		const loaderEl = this.$g('epc-loader');
+		const cardTitle = triggerEl && triggerEl.closest ? (triggerEl.closest('.ep-card')?.querySelector('.ep-title')?.textContent || '') : '';
+		if (titleEl) titleEl.textContent = cardTitle || ('S' + seasonNum + ' E' + epNum);
+		if (listEl) listEl.innerHTML = '';
+		if (loaderEl) loaderEl.style.display = 'flex';
+		modal.classList.add('active');
+		document.body.classList.add('modal-open');
+		try {
+			const key = this.getTmdbMediaKey();
+			const tmdbId = (this.currentShow && String(this.currentShow.id) === String(tvId) && this.currentShow.tmdb_id) ? this.currentShow.tmdb_id : tvId;
+			if (String(tmdbId).startsWith('ani_')) {
+				if (loaderEl) loaderEl.style.display = 'none';
+				if (listEl) listEl.innerHTML = '<div class="pe-empty">No episode cast credits available.</div>';
+				return;
+			}
+			const data = await this.api('/tv/' + tmdbId + '/season/' + seasonNum + '/episode/' + epNum + '/credits', {}, key).catch(() => null);
+			if (reqId !== this._epcReqId || !modal.classList.contains('active')) return;
+			const cast = (data && Array.isArray(data.cast)) ? data.cast : [];
+			const guests = (data && Array.isArray(data.guest_stars)) ? data.guest_stars : [];
+			const seen = new Set();
+			const merged = [];
+			cast.concat(guests).forEach(p => {
+				if (!p || !p.id || !p.name) return;
+				const pid = String(p.id);
+				if (seen.has(pid)) return;
+				seen.add(pid);
+				merged.push(p);
+			});
+			if (loaderEl) loaderEl.style.display = 'none';
+			if (!listEl) return;
+			if (merged.length === 0) {
+				listEl.innerHTML = '<div class="pe-empty">No cast credits available for this episode.</div>';
+				return;
+			}
+			listEl.innerHTML = merged.map(p => {
+				const roleHtml = p.character ? '<div class="pe-ep-role">' + p.character + '</div>' : '';
+				return '<div class="pe-ep-row clickable" onclick="app.goToPersonFromEpCastModal(' + p.id + ')"><div class="pe-ep-title">' + p.name + '</div>' + roleHtml + '</div>';
+			}).join('');
+			if (listEl.parentElement) listEl.parentElement.scrollTop = 0;
+		} catch (e) {
+			if (reqId === this._epcReqId) {
+				if (loaderEl) loaderEl.style.display = 'none';
+				if (listEl) listEl.innerHTML = '<div class="pe-empty">Error loading episode cast.</div>';
+			}
+		}
+	},
+	closeEpisodeCastModal: function(e = null) {
+		if (e && e.target && e.target.id !== 'ep-cast-modal' && !e.target.closest('.pe-close-btn')) return;
+		const modal = this.$g('ep-cast-modal');
+		if (!modal || !modal.classList.contains('active')) return;
+		modal.classList.remove('active');
+		this.syncModalOpen();
+	},
+	goToPersonFromEpCastModal: function(personId) {
+		const modal = this.$g('ep-cast-modal');
+		if (modal) modal.classList.remove('active');
+		this.syncModalOpen();
+		if (personId) this.openPerson(personId);
 	},
 	setPersonYearSort: function(order) {
 		if (this.personYearSort === order) return;

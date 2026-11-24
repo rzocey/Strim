@@ -523,28 +523,19 @@ Object.assign(app, {
 		}
 	},
 	switchHeaderAnimation: function(activeEl, switchEl, onSwitch, targetActiveEl = null, targetSwitchEl = null) {
-		if (!activeEl || !switchEl || this._isHeaderSwitching) {
+		if (!activeEl || this._isHeaderSwitching) {
 			if (typeof onSwitch === 'function') onSwitch();
 			return;
 		}
 		this._isHeaderSwitching = true;
-		const parent = switchEl.parentElement;
-		const fadeBtnOutEl = (parent && parent.id === 'explore-switch-tabs') ? parent : switchEl;
 		activeEl.classList.add('title-switch-fade-out');
-		fadeBtnOutEl.classList.add('title-switch-fade-out');
 		setTimeout(() => {
 			if (typeof onSwitch === 'function') onSwitch();
 			const destActiveEl = targetActiveEl || activeEl;
-			const destSwitchEl = targetSwitchEl || switchEl;
-			const destParent = destSwitchEl.parentElement;
-			const fadeBtnInEl = (destParent && destParent.id === 'explore-switch-tabs') ? destParent : destSwitchEl;
 			activeEl.classList.remove('title-switch-fade-out');
-			fadeBtnOutEl.classList.remove('title-switch-fade-out');
 			destActiveEl.classList.add('title-switch-fade-in');
-			fadeBtnInEl.classList.add('title-switch-fade-in');
 			setTimeout(() => {
 				destActiveEl.classList.remove('title-switch-fade-in');
-				fadeBtnInEl.classList.remove('title-switch-fade-in');
 				this._isHeaderSwitching = false;
 			}, 160);
 		}, 160);
@@ -558,7 +549,7 @@ Object.assign(app, {
 		const tEl = this.$g('explore-title');
 		const destSwitchEl = this.$g('explore-switch-' + prevType);
 		this.switchHeaderAnimation(tEl, sEl, () => {
-			this.selectExploreCategory(targetType);
+			this.selectExploreCategory(targetType, false, false, true);
 		}, tEl, destSwitchEl);
 	},
 	homeScrollPos: 0,
@@ -761,6 +752,7 @@ Object.assign(app, {
 				['storage-modal', () => this.toggleAppModal('storage', false, null, true)],
 				['customize-modal', () => this.toggleAppModal('customize', false, null, true)],
 				['about-modal', () => this.toggleAppModal('about', false, null, true)],
+				['person-ep-modal', () => this.closePersonEpisodesModal(null, true)],
 				['options-sheet-overlay', () => this.closeOptionsSheet(null, true)]
 			];
 			for (const [id, closeFn] of activeModals) {
@@ -1251,6 +1243,16 @@ Object.assign(app, {
 			this.closeTrailer(null, false);
 			return;
 		}
+		const pem = this.$g('person-ep-modal');
+		if (pem && pem.classList.contains('active')) {
+			this.closePersonEpisodesModal();
+			return;
+		}
+		const epcm = this.$g('ep-cast-modal');
+		if (epcm && epcm.classList.contains('active')) {
+			this.closeEpisodeCastModal();
+			return;
+		}
 		const info = this.$g('si-infobox');
 		if (info) info.innerHTML = '';
 		if (this.currentView === 'search') {
@@ -1273,6 +1275,10 @@ Object.assign(app, {
 				}
 				return;
 			}
+		}
+		if (['movies', 'shows', 'series', 'companies', 'people'].includes(this.currentView)) {
+			this.navigate('explore', false, true);
+			return;
 		}
 		window.history.back();
 	},
@@ -1441,13 +1447,14 @@ Object.assign(app, {
 	setEpisodeHistory: function(h) {
 		this.$storeSet('sh_ep_history', h);
 	},
-	switchHistorySub: function() {
-		const sEl = this.$g('history-switch-title');
+	switchHistorySub: function(nextSub = null) {
+		const targetSub = nextSub || (this.historySub === 'episodes' ? 'titles' : 'episodes');
+		if (targetSub === this.historySub) return;
+		const sEl = this.$g('history-switch-' + targetSub);
 		if (sEl) sEl.blur();
 		const tEl = this.$g('history-view-title');
-		const nextSub = this.historySub === 'episodes' ? 'titles' : 'episodes';
 		this.switchHeaderAnimation(tEl, sEl, () => {
-			this.openHistorySub(nextSub, true);
+			this.openHistorySub(targetSub, true);
 		});
 	},
 	switchMyListSub: function() {
@@ -1481,9 +1488,15 @@ Object.assign(app, {
 			toggleBtn.style.display = 'none';
 		}
 		if (titleEl) titleEl.innerText = isEp ? 'Episode History' : 'Watch History';
-		if (switchEl) {
-			switchEl.innerHTML = isEp ? SWITCH_TITLES_SVG : SWITCH_EPISODES_SVG;
-			switchEl.title = isEp ? 'Titles' : 'Episodes';
+		const tBtn = this.$g('history-switch-titles');
+		const eBtn = this.$g('history-switch-episodes');
+		if (tBtn) {
+			tBtn.innerHTML = SWITCH_TITLES_SVG;
+			tBtn.classList.toggle('active', !isEp);
+		}
+		if (eBtn) {
+			eBtn.innerHTML = SWITCH_EPISODES_SVG;
+			eBtn.classList.toggle('active', isEp);
 		}
 		if (isEp) {
 			if (titlesGrid) titlesGrid.style.display = 'none';
@@ -1500,7 +1513,7 @@ Object.assign(app, {
 		this.syncHistoryUrl({
 			view: 'history',
 			sub
-		}, pageTitle, url, pushState);
+		}, pageTitle, url, false, true);
 		this.hidePageReloadOverlay();
 	},
 	renderEpisodeHistory: function() {
@@ -2007,7 +2020,7 @@ Object.assign(app, {
 		}
 		this.hidePageReloadOverlay();
 	},
-	renderCollageHtml: function(items, maxCount = 6) {
+	renderCollageHtml: function(items, maxCount = 4) {
 		const list = (items || []).filter(i => i && i.poster_path).slice(0, maxCount);
 		return list.map(it => `<div class="mylist-collage-item" style="background-image:url('${this.getImg(it.poster_path, 'poster')}');"></div>`).join('');
 	},
@@ -2015,7 +2028,7 @@ Object.assign(app, {
 		this.myListCollageIdx = ((this.myListCollageIdx || 0) + 1) % 6;
 	},
 	getMyListPlaceholderUrls: async function(slotOffset = 0) {
-		if (!this.exploreSets) this.exploreSets = this.$storeGet('str_c_exploresets_v6', null) || this.$sessGet('str_c_exploresets_v6', null);
+		if (!this.exploreSets) this.exploreSets = this.$storeGet('str_c_exploresets_v7', null) || this.$sessGet('str_c_exploresets_v7', null);
 		let pool = [];
 		if (this.exploreSets && (this.exploreSets.movie?.length || this.exploreSets.tv?.length)) {
 			const mFlat = (this.exploreSets.movie || []).flat();
@@ -2025,7 +2038,7 @@ Object.assign(app, {
 				if (mFlat[i]) pool.push(mFlat[i]);
 				if (sFlat[i]) pool.push(sFlat[i]);
 			}
-		} else if (this._myListPlaceholderPool && this._myListPlaceholderPool.length >= 12) {
+		} else if (this._myListPlaceholderPool && this._myListPlaceholderPool.length >= 8) {
 			pool = this._myListPlaceholderPool;
 		} else {
 			try {
@@ -2056,9 +2069,9 @@ Object.assign(app, {
 		if (pool.length === 0) return [];
 		const uniq = [...new Set(pool)];
 		const idx = this.myListCollageIdx || 0;
-		const start = ((idx * 12) + (slotOffset * 6)) % uniq.length;
+		const start = ((idx * 8) + (slotOffset * 4)) % uniq.length;
 		const out = [];
-		for (let i = 0; i < 6 && i < uniq.length; i++) {
+		for (let i = 0; i < 4 && i < uniq.length; i++) {
 			out.push(uniq[(start + i) % uniq.length]);
 		}
 		return out;
@@ -2075,7 +2088,7 @@ Object.assign(app, {
 				bSeen.add(cKey);
 				return true;
 			});
-			const bItems = bDedup.slice(0, 6);
+			const bItems = bDedup.slice(0, 4);
 			const bCard = bCollage.closest('.mylist-hub-card');
 			if (bItems.length > 0) {
 				bCollage.innerHTML = this.renderCollageHtml(bItems);
@@ -2110,7 +2123,7 @@ Object.assign(app, {
 				if (!seen.has(idKey)) {
 					seen.add(idKey);
 					cItems.push(entry.item);
-					if (cItems.length >= 6) break;
+					if (cItems.length >= 4) break;
 				}
 			}
 			const cCard = cCollage.closest('.mylist-hub-card');
@@ -2176,14 +2189,14 @@ Object.assign(app, {
 		const grid = this.$g('mylist-custom-grid');
 		if (!grid) return;
 		const watchedRaw = Object.values(this.watchedList || {});
-		const watchedItems = this.sortByAddedAt(watchedRaw).filter(i => i && i.poster_path).slice(0, 6);
+		const watchedItems = this.sortByAddedAt(watchedRaw).filter(i => i && i.poster_path).slice(0, 4);
 		const watchedCollage = watchedItems.length > 0 ? `<div class="mylist-card-collage">${this.renderCollageHtml(watchedItems)}</div><div class="mylist-card-overlay"></div>` : '';
 		const watchedCard = `<div class="custom-list-card" onclick="app.navigate('markedaswatched')">${watchedCollage}<div class="custom-list-card-title">Watched</div></div>`;
 		const customLists = this.customLists || [];
 		const customItemsList = [];
 		const customCards = customLists.map(cl => {
 			const rawItems = Object.values(cl.items || {});
-			const items = this.sortByAddedAt(rawItems).filter(i => i && i.poster_path).slice(0, 6);
+			const items = this.sortByAddedAt(rawItems).filter(i => i && i.poster_path).slice(0, 4);
 			customItemsList.push(items);
 			const collageHtml = items.length > 0 ? `<div class="mylist-card-collage">${this.renderCollageHtml(items)}</div><div class="mylist-card-overlay"></div>` : '';
 			return `<div class="custom-list-card" onclick="app.openMyListSub('custom_detail', '${cl.id}')">${collageHtml}<button type="button" class="custom-list-del-btn" onclick="event.stopPropagation();app.confirmDeleteCustomList('${cl.id}')" title="Delete List">&times;</button><div class="custom-list-card-title">${cl.name}</div></div>`;
@@ -3511,14 +3524,10 @@ ${actRow('Reset User Data', 'Permanently erases all saved preferences, custom li
 		const eh = this.$g('explore-hub');
 		if (!eh) return;
 		eh.innerHTML = `
-<div class="explore-split-card">
-<div class="explore-card explore-split-half explore-card-series" onclick="app.selectExploreCategory('tv')"><div class="explore-collage" id="explore-series-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${TV_CARD_SVG(26, 26)}</div><div class="explore-card-title">Shows</div><div class="explore-card-subtitle">Series, Dramas, & More</div></div></div>
-<div class="explore-card explore-split-half explore-card-movies" onclick="app.selectExploreCategory('movie')"><div class="explore-collage" id="explore-movies-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${MOVIE_CARD_SVG(26, 26)}</div><div class="explore-card-title">Movies</div><div class="explore-card-subtitle">Blockbusters, Classics, & More</div></div></div>
-</div>
-<div class="explore-split-card">
-<div class="explore-card explore-split-half explore-card-companies" onclick="app.selectExploreCategory('company')"><div class="explore-collage" id="explore-companies-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${COMPANY_SVG}</div><div class="explore-card-title">Companies</div><div class="explore-card-subtitle">Networks, Studios, & More</div></div></div>
-<div class="explore-card explore-split-half explore-card-people" onclick="app.selectExploreCategory('person')"><div class="explore-collage" id="explore-people-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${PICTURE_SVG}</div><div class="explore-card-title">People</div><div class="explore-card-subtitle">Actors, Filmmakers, & More</div></div></div>
-</div>`;
+<div class="explore-card explore-card-series" onclick="app.selectExploreCategory('tv')"><div class="explore-collage" id="explore-series-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${TV_CARD_SVG(26, 26)}</div><div class="explore-card-title">Shows</div></div></div>
+<div class="explore-card explore-card-movies" onclick="app.selectExploreCategory('movie')"><div class="explore-collage" id="explore-movies-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${MOVIE_CARD_SVG(26, 26)}</div><div class="explore-card-title">Movies</div></div></div>
+<div class="explore-card explore-card-companies" onclick="app.selectExploreCategory('company')"><div class="explore-collage" id="explore-companies-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${COMPANY_SVG}</div><div class="explore-card-title">Companies</div></div></div>
+<div class="explore-card explore-card-people" onclick="app.selectExploreCategory('person')"><div class="explore-collage" id="explore-people-collage"></div><div class="explore-card-overlay"></div><div class="explore-card-glow"></div><div class="explore-card-content"><div class="explore-card-icon">${PICTURE_SVG}</div><div class="explore-card-title">People</div></div></div>`;
 	},
 	renderWatchControls: function() {
 		const wc = this.$g('w-controls-bar');
@@ -3559,6 +3568,8 @@ ${actRow('Reset User Data', 'Permanently erases all saved preferences, custom li
 		h.push('<div class="custom-prompt-overlay" id="custom-prompt" onclick="app.closeCustomPrompt(event)" onwheel="event.preventDefault()"><div class="custom-prompt-box" onclick="event.stopPropagation()"><div class="custom-prompt-title">Confirm Action</div><div class="custom-prompt-msg" id="custom-prompt-msg">Are you sure?</div><div class="custom-prompt-actions"><button class="custom-prompt-btn cancel" onclick="app.closeCustomPrompt()">Cancel</button><button class="custom-prompt-btn confirm" id="custom-prompt-confirm-btn">OK</button></div></div></div>');
 		h.push('<div id="lucky-modal" onclick="app.cancelLucky(false,event)"><div class="lucky-modal-wrapper"><div class="lucky-tooltip" id="lucky-tooltip"><span class="lucky-tooltip-text">Randomly picks a movie or show based on current filters</span><button type="button" class="lucky-tooltip-close" onclick="app.dismissLuckyTooltip()">&times;</button></div><div class="lucky-box"><button type="button" class="lucky-close-btn" onclick="app.cancelLucky()">&times;</button><div class="lucky-poster-wrap" id="lucky-poster-wrap"><img id="lucky-poster" class="lucky-poster-img" src=""></div><div class="lucky-title" id="lucky-title">Rolling the reels...</div><div class="lucky-actions"><button type="button" class="lucky-roll-btn" id="lucky-roll-btn" onclick="app.startFeelingLucky()" style="display:none;">Roll Again</button><button type="button" class="lucky-watch-btn" id="lucky-watch-btn" onclick="app.openLuckyShow()" style="display:none;">Watch</button></div></div></div></div>');
 		h.push('<div id="media-lightbox-modal" onclick="app.closeMediaLightbox(event)"><div class="dots-loader" id="media-lightbox-loader" style="display:none;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="media-lightbox-content" onclick="event.stopPropagation()"><img id="media-lightbox-img" class="media-lightbox-img" src="" alt="Media Preview"></div></div>');
+		h.push('<div id="person-ep-modal" class="custom-prompt-overlay" onclick="app.closePersonEpisodesModal(event)"><div class="person-ep-box" onclick="event.stopPropagation()"><div class="pe-header"><img id="pe-poster" class="pe-poster" alt=""><div class="pe-header-info"><div id="pe-title" class="pe-title-row clickable" onclick="app.openShowFromPersonModal()"></div><div id="pe-sub" class="pe-sub"></div></div><button type="button" class="sheet-close-btn pe-close-btn" onclick="app.closePersonEpisodesModal()">&times;</button></div><div class="pe-season-label">SEASON</div><div class="scroll-row-container pe-seasons-container"><div id="pe-seasons-row" class="scroll-row pe-seasons-row" onscroll="app.checkScrollArrow(this)"></div></div><div class="pe-list-wrap"><div id="pe-loader" class="pe-loader-overlay" style="display:none;"><div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div><div id="pe-ep-list" class="pe-ep-list"></div></div></div></div>');
+		h.push('<div id="ep-cast-modal" class="custom-prompt-overlay" onclick="app.closeEpisodeCastModal(event)"><div class="person-ep-box ep-cast-box" onclick="event.stopPropagation()"><div class="pe-header epc-header"><div class="pe-header-info"><div id="epc-title" class="epc-title"></div></div><button type="button" class="sheet-close-btn pe-close-btn" onclick="app.closeEpisodeCastModal()">&times;</button></div><div class="pe-list-wrap"><div id="epc-loader" class="pe-loader-overlay" style="display:none;"><div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div><div id="epc-list" class="pe-ep-list"></div></div></div></div>');
 		mc.innerHTML = h.join('');
 	},
 	fetchShowMedia(movieData) {

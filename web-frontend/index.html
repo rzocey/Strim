@@ -9,7 +9,7 @@
     <meta name="color-scheme" content="dark">
     <meta name="darkreader-lock">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; frame-src 'self' https:;">
-    <title>Home</title>
+    <title>Site Name</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script>
       (function() {
@@ -37,6 +37,12 @@
       <button class="nav-btn active" data-icon="home" onclick="app.navigate('home')"></button>
       <button class="nav-btn" data-icon="explore" onclick="app.navigate('explore')"></button>
       <button class="nav-btn" data-icon="mylist" onclick="app.navigate('mylist')"></button>
+      <button type="button" id="explore-switch-tv" class="nav-switch-btn nav-switch-explore" title="Shows" data-icon="switch-tv" onclick="app.switchExploreType('tv', this)"></button>
+      <button type="button" id="explore-switch-movie" class="nav-switch-btn nav-switch-explore" title="Movies" data-icon="switch-movie" onclick="app.switchExploreType('movie', this)"></button>
+      <button type="button" id="explore-switch-company" class="nav-switch-btn nav-switch-explore" title="Companies" data-icon="switch-company" onclick="app.switchExploreType('company', this)"></button>
+      <button type="button" id="explore-switch-person" class="nav-switch-btn nav-switch-explore" title="People" data-icon="switch-person" onclick="app.switchExploreType('person', this)"></button>
+      <button type="button" id="history-switch-titles" class="nav-switch-btn nav-switch-history" title="Titles" data-icon="switch-titles" onclick="app.switchHistorySub('titles')"></button>
+      <button type="button" id="history-switch-episodes" class="nav-switch-btn nav-switch-history" title="Episodes" data-icon="switch-episodes" onclick="app.switchHistorySub('episodes')"></button>
       <button class="nav-btn" id="nav-search-btn" data-icon="search" onclick="app.navigate('search')"></button>
       <button class="nav-btn" id="nav-options-btn" data-icon="options" onclick="app.toggleOptionsSheet()"></button>
       <button type="button" class="nav-btn nav-col-btn" id="nav-col-btn" data-icon="col-nav" onclick="app.collapseSideNav()" title="Collapse"></button>
@@ -130,15 +136,9 @@
           </div>
           <div id="explore-hub" class="explore-hub"></div>
           <div id="explore-catalog" class="explore-catalog" style="display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;">
               <div class="explore-header-titles">
                 <h2 id="explore-title" class="view-title">Movies</h2>
-                <div id="explore-switch-tabs" class="explore-switch-tabs">
-                  <span id="explore-switch-tv" class="explore-switch-title" title="Shows" data-icon="switch-tv" onclick="app.switchExploreType('tv', this)"></span>
-                  <span id="explore-switch-movie" class="explore-switch-title" title="Movies" data-icon="switch-movie" onclick="app.switchExploreType('movie', this)"></span>
-                  <span id="explore-switch-company" class="explore-switch-title" title="Companies" data-icon="switch-company" onclick="app.switchExploreType('company', this)"></span>
-                  <span id="explore-switch-person" class="explore-switch-title" title="People" data-icon="switch-person" onclick="app.switchExploreType('person', this)"></span>
-                </div>
               </div>
             </div>
             <div class="filter-bar" id="explore-filter-bar"></div>
@@ -203,7 +203,6 @@
               <div class="mylist-card-content">
                 <div class="mylist-card-icon" data-icon="star-hub"></div>
                 <div class="mylist-card-title">Bookmark</div>
-                <div class="mylist-card-subtitle">Save favorite shows & movies for later</div>
               </div>
             </div>
             <div class="mylist-hub-card" id="hub-card-custom" onclick="app.openMyListSub('custom_hub')">
@@ -212,7 +211,6 @@
               <div class="mylist-card-content">
                 <div class="mylist-card-icon" data-icon="edit-hub"></div>
                 <div class="mylist-card-title">Custom List</div>
-                <div class="mylist-card-subtitle">Build and organize custom watchlists</div>
               </div>
             </div>
           </div>
@@ -251,9 +249,8 @@
         <div class="content-section view-padded">
           <div class="section-header view-header-row">
             <div class="view-header-col">
-              <div style="display:inline-flex;align-items:baseline;gap:8px;">
+              <div class="explore-header-titles">
                 <h2 class="view-title" id="history-view-title">Titles</h2>
-                <span id="history-switch-title" class="explore-switch-title" title="Episodes" data-icon="switch-episodes" onclick="app.switchHistorySub()"></span>
               </div>
               <button id="clear-history-btn" class="btn-clear-action" onclick="app.showCustomPrompt('history')" title="Clear History"></button>
             </div>
@@ -440,8 +437,14 @@
                 <h2 class="view-title person-filmography-title" id="person-filmography-title">Filmography</h2>
               </div>
             </div>
-            <div class="person-titles-row" id="person-titles-row" style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px 0;">
-              <h3 class="person-titles-heading" id="person-titles-heading" style="display:none;margin:0;"></h3>
+            <div class="person-titles-row" id="person-titles-row" style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px 0;gap:12px;flex-wrap:wrap;">
+              <div class="person-titles-left" id="person-titles-left">
+                <div class="person-role-select-wrap" id="person-role-select-wrap" style="display:none;">
+                  <span class="person-titles-heading person-role-label">Role :</span>
+                  <select class="person-role-select" id="person-role-select" onchange="app.setPersonCreditRole(this.value)"></select>
+                </div>
+                <h3 class="person-titles-heading" id="person-titles-heading" style="display:none;margin:0;"></h3>
+              </div>
               <div class="catalog-header-actions" id="person-header-actions" style="display:none;align-items:center;gap:10px;flex-shrink:0;">
                 <div class="catalog-type-filter-bar" id="person-filter-bar" style="display:none;">
                   <button type="button" class="catalog-type-filter-btn active" id="pfb-all" onclick="app.setPersonTypeFilter('all')">All</button>
@@ -457,6 +460,7 @@
               </div>
             </div>
             <div class="filter-bar" id="person-catalog-filter-bar" style="display:none;"></div>
+            <h3 class="person-titles-heading person-role-subheading" id="person-role-subheading" style="display:none;"></h3>
             <div class="grid-container" id="person-filmography-grid"></div>
           </div>
         </div>

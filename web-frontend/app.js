@@ -770,7 +770,7 @@ var app = {
 		if (persistType) this.persistCache(persistType);
 	},
 	initPersistentCaches() {
-		if (localStorage.getItem('str_anime_ver') !== 'v21') {
+		if (localStorage.getItem('str_anime_ver') !== 'v22') {
 			localStorage.removeItem('str_c_anime');
 			localStorage.removeItem('str_c_show');
 			localStorage.removeItem('str_c_similar');
@@ -779,7 +779,7 @@ var app = {
 			sessionStorage.removeItem('str_c_anime');
 			sessionStorage.removeItem('str_c_show');
 			sessionStorage.removeItem('str_c_similar');
-			localStorage.setItem('str_anime_ver', 'v21');
+			localStorage.setItem('str_anime_ver', 'v22');
 		}
 		for (const type in this.cacheMap) {
 			const prop = this.cacheMap[type];
@@ -3015,7 +3015,13 @@ var app = {
 			}
 			if (item.status && typeof item.status === 'string') {
 				if (CANCELLED_RE.test(item.status) && isZeroVote && !isReleasedPast) return true;
-				if (type === 'movie' && UNRELEASED_RE.test(item.status) && isZeroVote && !isReleasedPast) return true;
+				if (type === 'movie' && UNRELEASED_RE.test(item.status) && isZeroVote && !isReleasedPast) {
+					const isPlannedOrInProd = /^(?:planned|in\s*production)$/i.test(item.status);
+					const isImminent = !isNaN(relTs0) && (relTs0 - Date.now()) <= 90 * 86400000;
+					const hasCompleteInfo = Boolean(item.poster_path && item.overview && item.overview.trim() && hasGenres);
+					const hasTraction = Boolean((item.runtime && item.runtime > 0) || (item.backdrop_path && (item.popularity || 0) >= 5));
+					if (!(isPlannedOrInProd && isImminent && hasCompleteInfo && hasTraction)) return true;
+				}
 			}
 			if (noGenres && typeof item.vote_count === 'number' && item.vote_count === 0 && (item.popularity || 0) < 0.5) return true;
 			const itemYr = parseInt(this.getItemYear(item), 10);
@@ -3948,10 +3954,6 @@ var app = {
 			if (this.currentView !== 'watch' || !this.watchState || !this.watchState.id) return;
 			if (!data) return;
 			let triggerNext = false;
-			const isZoko = Boolean((data && data.channel === 'zokoanime') || (event.origin && event.origin.includes('zokoanime.video')));
-			const isMega = Boolean((data && (data.channel === 'megacloud' || data.event === 'complete' || data.event === 'time')) || (event.origin && (event.origin.includes('megaplay.buzz') || event.origin.includes('megacloud'))));
-			const isMegavid = Boolean((data && data.channel === 'kisskh') || (event.origin && event.origin.includes('megavid.buzz')));
-			const isAniLink = Boolean((data && typeof data.type === 'string' && data.type.startsWith('anilink-player:')) || (event.origin && event.origin.includes('anilink.cc')));
 			const handleProg = (s, e, prog, dur, evType) => {
 				const curId = this.watchState.id;
 				const isTv = this.watchState.type === 'tv' || this.watchState.type === 'series' || this.watchState.type === 'show';
@@ -3964,42 +3966,14 @@ var app = {
 						this.saveWatchProgress(pKey, prog, ['pause', 'paused'].includes(evType));
 					}
 				}
-				if (isZoko) {
-					if (evType === 'ended' || evType === 'complete') {
-						this.removeWatchProgress(pKey);
-						triggerNext = true;
-					}
-				} else if (isMega) {
-					if (evType === 'complete') {
-						this.removeWatchProgress(pKey);
-						triggerNext = true;
-					}
-				} else if (isMegavid) {
-					if (evType === 'complete') {
-						this.removeWatchProgress(pKey);
-						triggerNext = true;
-					}
-				} else if (isAniLink) {
-					if (evType === 'ended' || evType === 'autonext') {
-						this.removeWatchProgress(pKey);
-						triggerNext = true;
-					}
-				} else {
-					const isNearEnd = (!isNaN(dur) && dur > 0 && !isNaN(prog) && prog > 0 && (dur - prog) <= 8);
-					const isPausedNearEnd = (['pause', 'paused'].includes(evType) && !isNaN(dur) && dur > 0 && !isNaN(prog) && prog > 0 && (dur - prog) <= 14);
-					if (isEnded || isNearEnd || isPausedNearEnd) {
-						this.removeWatchProgress(pKey);
-						triggerNext = true;
-					}
+				const isNearEnd = (!isNaN(dur) && dur > 0 && !isNaN(prog) && prog > 0 && (dur - prog) <= 8);
+				const isPausedNearEnd = (['pause', 'paused'].includes(evType) && !isNaN(dur) && dur > 0 && !isNaN(prog) && prog > 0 && (dur - prog) <= 14);
+				if (isEnded || isNearEnd || isPausedNearEnd) {
+					this.removeWatchProgress(pKey);
+					triggerNext = true;
 				}
 			};
-			if (isAniLink) {
-				const aniEv = data.type.replace('anilink-player:', '').toLowerCase();
-				const p = data.payload || {};
-				handleProg(this.watchState.season, this.watchState.episode, parseFloat(p.currentTime || '0'), parseFloat(p.duration || '0'), aniEv);
-			} else if (isMegavid) {
-				handleProg(this.watchState.season, this.watchState.episode, parseFloat(data.currentTime || '0'), parseFloat(data.duration || '0'), (data.event || '').toLowerCase());
-			} else if (data.type === 'MEDIA_DATA' && data.data) {
+			if (data.type === 'MEDIA_DATA' && data.data) {
 				let list = Array.isArray(data.data) ? data.data : [data.data];
 				let cur = list.find(m => String(m.id) === String(this.watchState.id));
 				if (cur) {

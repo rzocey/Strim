@@ -100,7 +100,8 @@ Object.assign(app, {
 		});
 		if (pending.length === 0) return;
 		const tmdbKey = this.getTmdbMediaKey();
-		const cleanAniTitle = (s) => (s || '').replace(/\s*\(\d{4}\)\s*$/i, '').replace(/\s*[:\-–—~]?\s*\((?:tv|tv\s+series|ona|ova|special|specials|web)\)\s*$/i, '').replace(/\s*\b(?:tv|ona|ova)\b\s*$/i, '').trim();
+		const cleanAniTitle = (s) => (s || '').replace(/\s*\(\d{4}\)\s*$/i, '').replace(/\s*[:\-–—~]?\s*\((?:tv|tv\s+series|ona|web)\)\s*$/i, '').replace(/\s+\b(?:tv)\b\s*$/i, '').trim();
+		const stripOvaWord = (s) => cleanAniTitle(s).replace(/\s*[:\-–—~]?\s*\((?:ova|special|specials)\)\s*$/i, '').replace(/\s+\b(?:ova|special|specials)\b\s*$/i, '').trim();
 		const getBase = (s) => cleanAniTitle(s).split(/[:\-–—~]/)[0].trim();
 		const norm = (s) => cleanAniTitle(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 		for (let i = 0; i < pending.length; i += pending.length) {
@@ -110,20 +111,50 @@ Object.assign(app, {
 				const idStr = String(it.id);
 				const mType = it.media_type === 'movie' ? 'movie' : 'tv';
 				const rawQ = it.title || it.name || it.romaji || '';
+				const cachedMeta = (this.animeCache && this.animeCache[idStr]) || {};
+				const fmt = it.animeFormat || cachedMeta.animeFormat || it.type || '';
+				const isOvaOrSpecial = ['OVA', 'SPECIAL', 'Special'].includes(fmt) || /\b(?:ova|special|specials)\b/i.test(rawQ) || /\b(?:ova|special|specials)\b/i.test(it.romaji || '');
+				const isSpinoffOrSub = isOvaOrSpecial || ['TV_SHORT', 'ONA', 'Short'].includes(fmt) || Boolean(cachedMeta.hasParent) || this.isAnimeSeasonSequel(rawQ) || this.isAnimeSeasonSequel(it.romaji || '');
 				const cleanQ = cleanAniTitle(rawQ);
 				const baseQ = getBase(rawQ);
+				const strippedEng = stripOvaWord(rawQ);
+				const strippedRom = stripOvaWord(it.romaji || '');
 				const romQ = cleanAniTitle(it.romaji || '');
-				const queries = [...new Set([cleanQ, romQ, baseQ].filter(q => q && q.length >= 2))];
+				const queries = [...new Set((isSpinoffOrSub ? [cleanQ, romQ, strippedEng, strippedRom] : [cleanQ, romQ, baseQ]).filter(q => q && q.length >= 2))];
 				if (queries.length === 0) return;
-				const itNorms = [...new Set([cleanQ, romQ, baseQ].map(norm).filter(Boolean))];
+				const fullNorms = [...new Set([cleanQ, romQ].map(norm).filter(Boolean))];
+				const strippedNorms = [...new Set([strippedEng, strippedRom].map(norm).filter(Boolean))];
+				const forbiddenNorms = new Set();
+				(cachedMeta.parentTitles || []).forEach(pt => {
+					const pn = norm(pt);
+					const pbn = norm(getBase(pt));
+					const psn = norm(stripOvaWord(pt));
+					if (pn && !fullNorms.includes(pn)) forbiddenNorms.add(pn);
+					if (pbn && !fullNorms.includes(pbn)) forbiddenNorms.add(pbn);
+					if (psn && !fullNorms.includes(psn)) forbiddenNorms.add(psn);
+				});
+				[rawQ, it.romaji || ''].forEach(t => {
+					const bn = norm(getBase(t));
+					const sn = norm(stripOvaWord(t));
+					const fn = norm(cleanAniTitle(t));
+					if (bn && fn && bn !== fn) forbiddenNorms.add(bn);
+					if (isOvaOrSpecial && sn && fn && sn !== fn) forbiddenNorms.add(sn);
+				});
+				const subNorms = [rawQ, it.romaji || ''].map(t => {
+					const pts = stripOvaWord(t).split(/[:\-–—~]/).map(s => s.trim()).filter(Boolean);
+					return pts.length > 1 ? norm(pts[pts.length - 1]) : '';
+				}).filter(s => s.length >= 3);
+				const itNorms = (!isSpinoffOrSub && fmt === 'TV') ? [...new Set([...fullNorms, norm(baseQ)].filter(Boolean))] : fullNorms;
 				const itYr = parseInt(it.year, 10) || 0;
 				try {
 					let match = null;
 					for (const qStr of queries) {
-						const res = await this.api(`/search/${mType}`, {
+						const [res, resAlt] = await Promise.all([this.api(`/search/${mType}`, {
 							query: qStr
-						}, tmdbKey);
-						const hits = (res && res.results) || [];
+						}, tmdbKey), (isOvaOrSpecial && mType === 'tv') ? this.api('/search/movie', {
+							query: qStr
+						}, tmdbKey) : Promise.resolve(null)]);
+						const hits = [...((res && res.results) || []), ...((resAlt && resAlt.results) || [])];
 						match = hits.find(h => {
 							if (!h || !h.poster_path) return false;
 							const isAnim = this.isAnimeItem(h) || (Array.isArray(h.genre_ids) && h.genre_ids.includes(16) && ['JP', 'KR', 'CN'].some(c => (h.origin_country || []).includes(c) || h.original_language === (c === 'JP' ? 'ja' : c === 'KR' ? 'ko' : 'zh')));
@@ -131,9 +162,20 @@ Object.assign(app, {
 							const hN = norm(h.title || h.name);
 							const hOn = norm(h.original_title || h.original_name);
 							const hYr = parseInt(this.getItemYear(h), 10) || 0;
-							const yrOk = !itYr || !hYr || Math.abs(hYr - itYr) <= 2;
+							const maxYrDiff = isOvaOrSpecial ? 1 : 2;
+							const yrOk = !itYr || !hYr || Math.abs(hYr - itYr) <= maxYrDiff;
 							if (!yrOk) return false;
-							return itNorms.some(tn => hN === tn || hOn === tn || (tn.length >= 4 && (hN.startsWith(tn) || tn.startsWith(hN))));
+							const hNs = norm(stripOvaWord(h.title || h.name));
+							const hOns = norm(stripOvaWord(h.original_title || h.original_name));
+							if (!fullNorms.includes(hN) && !fullNorms.includes(hOn) && (forbiddenNorms.has(hN) || forbiddenNorms.has(hOn) || forbiddenNorms.has(hNs) || forbiddenNorms.has(hOns))) return false;
+							if (fullNorms.some(tn => hN === tn || hOn === tn)) return true;
+							if (isOvaOrSpecial && strippedNorms.some(tn => !forbiddenNorms.has(tn) && (hN === tn || hOn === tn || hNs === tn || hOns === tn))) {
+								return subNorms.length === 0 || subNorms.some(sn => hN.includes(sn) || hOn.includes(sn));
+							}
+							if (isSpinoffOrSub && subNorms.length > 0) {
+								return subNorms.some(sn => sn.length >= 5 && (hN.endsWith(sn) || hOn.endsWith(sn))) && [norm(getBase(rawQ)), norm(getBase(it.romaji || ''))].filter(Boolean).some(b => hN.startsWith(b) || hOn.startsWith(b));
+							}
+							return (!isSpinoffOrSub && fmt === 'TV' && (!itYr || !hYr || Math.abs(hYr - itYr) <= 1)) ? itNorms.some(tn => hN === tn || hOn === tn) : false;
 						});
 						if (match) break;
 					}
@@ -336,6 +378,13 @@ Object.assign(app, {
 			relations: m.relations || null
 		};
 		const edges = m.relations?.edges || [];
+		const pEdges = edges.filter(e => ['PARENT', 'MAIN_STORY', 'FULL_STORY'].includes(e?.relationType) || (m.format !== 'TV' && e?.relationType === 'PREQUEL'));
+		entry.hasParent = pEdges.length > 0;
+		entry.parentTitles = [];
+		pEdges.forEach(e => {
+			const nt = e?.node?.title;
+			if (nt)[nt.english, nt.romaji, nt.userPreferred].filter(Boolean).forEach(t => entry.parentTitles.push(t));
+		});
 		const tvSeq = edges.filter(e => e.relationType === 'SEQUEL' && ['TV', 'TV_SHORT', 'ONA'].includes(e.node?.format));
 		if (tvSeq.length > 0 && tvSeq.some(e => e.node?.episodes && (e.node?.title || e.node?.startDate))) {
 			const chain = [{
@@ -1712,7 +1761,7 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
 		return gList.some(g => (g === 16 || g.id === 16 || (g.name && g.name.toLowerCase() === 'animation')));
 	},
 	async fetchPrioritizedSimilar(id, type, currentData = null, page = 1) {
-		const cacheKey = `${type}_${id}_v3`;
+		const cacheKey = `${type}_${id}_v4`;
 		if (this.similarCache) {
 			const c = this.lruGet(this.similarCache, cacheKey);
 			if (c) return c;
@@ -1876,7 +1925,16 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
 				});
 				const toCardObj = (m) => {
 					[m.title?.english, m.title?.romaji, m.title?.userPreferred].filter(Boolean).forEach(t => seenTitles.add(this.normTitle(t)));
-					return this.toAniCard(m, m.format === 'MOVIE');
+					const cObj = this.toAniCard(m, m.format === 'MOVIE');
+					if (cObj && this.animeCache && this.animeCache[cObj.id]) {
+						const pList = this.animeCache[cObj.id].parentTitles || [];
+						[data?.title, data?.name, rootMedia?.title?.english, rootMedia?.title?.romaji].filter(Boolean).forEach(pt => {
+							if (!pList.includes(pt)) pList.push(pt);
+						});
+						this.animeCache[cObj.id].parentTitles = pList;
+						if (m.format !== 'TV') this.animeCache[cObj.id].hasParent = true;
+					}
+					return cObj;
 				};
 				const aniFranchiseItems = franchiseNodes.map(x => toCardObj(x.node)).filter(i => i.poster_path && !this.isBlocked(i, i.media_type));
 				const tmdbByNorm = new Map();
