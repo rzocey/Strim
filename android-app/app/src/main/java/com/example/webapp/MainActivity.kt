@@ -290,6 +290,7 @@ class MainActivity : AppCompatActivity() {
         fun getStorageStatsJson(): String {
             return activity.getStorageStatsJson()
         }
+
     }
 
     private fun getSavedWhitelist(): List<String> {
@@ -469,16 +470,37 @@ class MainActivity : AppCompatActivity() {
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
+                val host = request.url?.host?.lowercase() ?: ""
+
                 if (request.isForMainFrame) {
                     if (!url.contains("view=watch", ignoreCase = true) && customView == null) {
                         cancelMediaNotification()
                     }
                 }
-                return request.isForMainFrame && !url.startsWith("https://app.local/")
+
+                val isGitHubUrl = host.contains("github.com") ||
+                        host.contains("githubusercontent.com") ||
+                        host.contains("github.io")
+                if (isGitHubUrl || (!url.startsWith("https://app.local/") && request.isForMainFrame)) {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, request.url)
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e("WebApp", "Error opening external URL $url: ${e.localizedMessage}")
+                    }
+                    return true
+                }
+                return false
             }
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
+                val reqHost = request.url?.host?.lowercase() ?: ""
+
+                // Bypass GitHub links & asset release downloads
+                if (reqHost.contains("github.com") || reqHost.contains("githubusercontent.com") || reqHost.contains("github.io")) {
+                    return super.shouldInterceptRequest(view, request)
+                }
 
                 // 0. Intercept VAST / IMA / Ad Tag requests & AdBlock Engine with Media Safeguards
                 val isMediaStream = url.contains(".m3u8", ignoreCase = true) ||
@@ -488,7 +510,6 @@ class MainActivity : AppCompatActivity() {
                         url.contains(".key", ignoreCase = true) ||
                         url.contains(".m4s", ignoreCase = true)
 
-                val reqHost = request.url?.host?.lowercase() ?: ""
                 val isAdOrVastTag = !isMediaStream && (
                         reqHost.contains("doubleclick") ||
                                 reqHost.contains("googleads") ||
