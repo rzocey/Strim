@@ -49,99 +49,99 @@ const SWITCH_TITLES_SVG = svgStroke('<circle cx="12" cy="12" r="10"/><polyline p
 const SWITCH_EPISODES_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v1a1 1 0 0 0 1 1h16a1 1 0 0 1 1-1V2M3 22v-1a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v1"/><rect width="18" height="10" x="3" y="7" rx="2"/></svg>';
 const SWITCH_BROWSING_SVG = svgStroke('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>', 18, 18);
 const OPTIONS_ITEMS_DATA = [
-['history', 'History', '', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 'currentColor'],
-['blocklist', 'Blocklist', '', '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>', 'currentColor'],
-['customize', 'Customize', '', '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 'currentColor'],
-['storage', 'Data & Storage', '', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 10c0 1.66 4.03 3 9 3s9-1.34 9-3"/><path d="M3 15c0 1.66 4.03 3 9 3s9-1.34 9-3"/>', 'currentColor'],
-['github', 'GitHub Page', '', '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>', 'currentColor', '0 0 16 16', true],
-['about', 'Disclaimer', '', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>', 'currentColor']
+	['history', 'History', '', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 'currentColor'],
+	['blocklist', 'Blocklist', '', '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>', 'currentColor'],
+	['customize', 'Customize', '', '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 'currentColor'],
+	['storage', 'Data & Storage', '', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 10c0 1.66 4.03 3 9 3s9-1.34 9-3"/><path d="M3 15c0 1.66 4.03 3 9 3s9-1.34 9-3"/>', 'currentColor'],
+	['github', 'GitHub Page', '', '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>', 'currentColor', '0 0 16 16', true],
+	['about', 'Disclaimer', '', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>', 'currentColor']
 ];
 const STATIC_ICONS = {
-back: svgStroke('<path d="M19 12H5M12 19l-7-7 7-7"/>', 22, 22, 2.5),
-home: svgStroke('<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/>', 24),
-explore: svgStroke('<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 5.93h14.14M4.93 18.07h14.14"/>', 24),
-mylist: svgFill('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', 24, 24, 'style="flex-shrink:0;"'),
-search: svgStroke('<circle cx="10" cy="10" r="7"/><path d="m22 22-7-7"/>', 24),
-options: svgStroke('<path d="M3 4h18M3 12h18M3 20h18M14 2v4M8 10v4M16 18v4"/>', 24),
-'col-nav': svgStroke('<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>', 24, 24, 2.2),
-'sort-desc': svgFill('<path d="M12 4l9 14H3z"/>', 10),
-'sort-asc': svgFill('<path d="M12 20L3 6h18z"/>', 10),
-'clear-sm': svgStroke('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>', 13, 13, 2.5, 'style="display:block;"'),
-'edit-sm': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 15),
-'edit-hub': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 24),
-'plus-sm': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 15, 15, 2.5),
-'plus-md': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 18, 18, 2.5),
-'star-hub': '<svg width="28" height="28" viewBox="0 0 24 24" fill="#378EF0" stroke="#378EF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-trailer: YT_SVG(20, 20),
-watched: EYE_SVG(20, 20, true),
-'arrow-left': ARROW_LEFT_SVG,
-'arrow-right': ARROW_RIGHT_SVG,
-'back-seasons': svgStroke('<path d="M10 8V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-3"/><polyline points="7 7 2 12 7 17"/><line x1="2" y1="12" x2="16" y2="12"/>', 21),
-'scroll-top': svgFill('<path d="M13.5 21a1.5 1.5 0 0 1-3 0V7.83l-4.88 4.88a1.5 1.5 0 1 1-2.12-2.12l7.5-7.5a1.5 1.5 0 0 1 2.12 0l7.5 7.5a1.5 1.5 0 1 1-2.12 2.12L13.5 7.83z"/>', 18),
-'expand-right': EXPAND_RIGHT_SVG(18, 18),
-'switch-tv': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-4 4.5L8 2"/><rect width="20" height="13" x="2" y="6.5" rx="2.5"/><path d="M6 22h12"/></svg>',
-'switch-movie': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="3"/><path d="M7 2v20M17 2v20M2 6h5M17 6h5M2 10h5M17 10h5M2 14h5M17 14h5M2 18h5M17 18h5"/><polygon fill="currentColor" stroke="currentColor" stroke-width="1" points="10 9 15 12 10 15"/></svg>',
-'switch-company': '<svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="20" x="3" y="2" rx="2"/><path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z"/></svg>',
-'switch-person': PICTURE_SVG,
-'switch-episodes': SWITCH_EPISODES_SVG,
-'switch-browsing': SWITCH_BROWSING_SVG,
-'plus-si': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
-'person-bio-placeholder': '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-'map-pin': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>'
+	back: svgStroke('<path d="M19 12H5M12 19l-7-7 7-7"/>', 22, 22, 2.5),
+	home: svgStroke('<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/>', 24),
+	explore: svgStroke('<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 5.93h14.14M4.93 18.07h14.14"/>', 24),
+	mylist: svgFill('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', 24, 24, 'style="flex-shrink:0;"'),
+	search: svgStroke('<circle cx="10" cy="10" r="7"/><path d="m22 22-7-7"/>', 24),
+	options: svgStroke('<path d="M3 4h18M3 12h18M3 20h18M14 2v4M8 10v4M16 18v4"/>', 24),
+	'col-nav': svgStroke('<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>', 24, 24, 2.2),
+	'sort-desc': svgFill('<path d="M12 4l9 14H3z"/>', 10),
+	'sort-asc': svgFill('<path d="M12 20L3 6h18z"/>', 10),
+	'clear-sm': svgStroke('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>', 13, 13, 2.5, 'style="display:block;"'),
+	'edit-sm': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 15),
+	'edit-hub': svgStroke('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>', 24),
+	'plus-sm': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 15, 15, 2.5),
+	'plus-md': svgStroke('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 18, 18, 2.5),
+	'star-hub': '<svg width="28" height="28" viewBox="0 0 24 24" fill="#378EF0" stroke="#378EF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+	trailer: YT_SVG(20, 20),
+	watched: EYE_SVG(20, 20, true),
+	'arrow-left': ARROW_LEFT_SVG,
+	'arrow-right': ARROW_RIGHT_SVG,
+	'back-seasons': svgStroke('<path d="M10 8V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-3"/><polyline points="7 7 2 12 7 17"/><line x1="2" y1="12" x2="16" y2="12"/>', 21),
+	'scroll-top': svgFill('<path d="M13.5 21a1.5 1.5 0 0 1-3 0V7.83l-4.88 4.88a1.5 1.5 0 1 1-2.12-2.12l7.5-7.5a1.5 1.5 0 0 1 2.12 0l7.5 7.5a1.5 1.5 0 1 1-2.12 2.12L13.5 7.83z"/>', 18),
+	'expand-right': EXPAND_RIGHT_SVG(18, 18),
+	'switch-tv': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-4 4.5L8 2"/><rect width="20" height="13" x="2" y="6.5" rx="2.5"/><path d="M6 22h12"/></svg>',
+	'switch-movie': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="3"/><path d="M7 2v20M17 2v20M2 6h5M17 6h5M2 10h5M17 10h5M2 14h5M17 14h5M2 18h5M17 18h5"/><polygon fill="currentColor" stroke="currentColor" stroke-width="1" points="10 9 15 12 10 15"/></svg>',
+	'switch-company': '<svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="20" x="3" y="2" rx="2"/><path fill="currentColor" stroke="none" d="M6.5 5h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 9h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM6.5 13h2.5v2H6.5zm4.25 0h2.5v2h-2.5zm4.25 0h2.5v2H15zM9 17h6v5H9z"/></svg>',
+	'switch-person': PICTURE_SVG,
+	'switch-episodes': SWITCH_EPISODES_SVG,
+	'switch-browsing': SWITCH_BROWSING_SVG,
+	'plus-si': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+	'person-bio-placeholder': '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+	'map-pin': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>'
 };
 if (typeof window !== 'undefined') {
-window.app = window.app || {};
-window.app.renderStaticIcons = function() {
-document.querySelectorAll('[data-icon]').forEach(el => {
-if (el.querySelector('svg')) return;
-const k = el.getAttribute('data-icon');
-if (STATIC_ICONS[k]) el.insertAdjacentHTML('afterbegin', STATIC_ICONS[k]);
-});
-};
-window.svgStroke = svgStroke;
-window.svgFill = svgFill;
-window.STAR_SVG = STAR_SVG;
-window.CHECK_SVG = CHECK_SVG;
-window.PLUS_SVG = PLUS_SVG;
-window.TRASH_SVG = TRASH_SVG;
-window.GRID_VIEW_SVG = GRID_VIEW_SVG;
-window.LIST_VIEW_SVG = LIST_VIEW_SVG;
-window.MIN_VIEW_SVG = MIN_VIEW_SVG;
-window.PICTURE_SVG = PICTURE_SVG;
-window.COMPANY_SVG = COMPANY_SVG;
-window.EYE_SVG = EYE_SVG;
-window.TRI_ARROW_SVG = TRI_ARROW_SVG;
-window.YT_SVG = YT_SVG;
-window.DOTS_HTML = DOTS_HTML;
-window.PLAY_BTN_SVG = PLAY_BTN_SVG;
-window.PAUSE_BTN_SVG = PAUSE_BTN_SVG;
-window.ANIME_BTN_SVG = ANIME_BTN_SVG;
-window.EXPLORE_SEARCH_SVG = EXPLORE_SEARCH_SVG;
-window.GALLERY_BTN_SVG = GALLERY_BTN_SVG;
-window.INFO_BTN_SVG = INFO_BTN_SVG;
-window.EXPAND_LEFT_SVG = EXPAND_LEFT_SVG;
-window.EXPAND_RIGHT_SVG = EXPAND_RIGHT_SVG;
-window.EXPAND_DOWN_SVG = EXPAND_DOWN_SVG;
-window.EXPAND_UP_SVG = EXPAND_UP_SVG;
-window.POPOVER_CHECK_SVG = POPOVER_CHECK_SVG;
-window.FILTER_BTN_SVG = FILTER_BTN_SVG;
-window.LUCKY_DICE_SVG = LUCKY_DICE_SVG;
-window.SORT_DESC_SVG = SORT_DESC_SVG;
-window.SORT_ASC_SVG = SORT_ASC_SVG;
-window.TV_CARD_SVG = TV_CARD_SVG;
-window.MOVIE_CARD_SVG = MOVIE_CARD_SVG;
-window.W_BACK_SVG = W_BACK_SVG;
-window.W_REFRESH_SVG = W_REFRESH_SVG;
-window.W_MENU_SVG = W_MENU_SVG;
-window.W_GEAR_SVG = W_GEAR_SVG;
-window.W_PREV_SVG = W_PREV_SVG;
-window.W_NEXT_SVG = W_NEXT_SVG;
-window.W_FS_SVG = W_FS_SVG;
-window.ARROW_LEFT_SVG = ARROW_LEFT_SVG;
-window.ARROW_RIGHT_SVG = ARROW_RIGHT_SVG;
-window.CAST_PLACEHOLDER_SVG = CAST_PLACEHOLDER_SVG;
-window.SWITCH_TITLES_SVG = SWITCH_TITLES_SVG;
-window.SWITCH_EPISODES_SVG = SWITCH_EPISODES_SVG;
-window.OPTIONS_ITEMS_DATA = OPTIONS_ITEMS_DATA;
-window.STATIC_ICONS = STATIC_ICONS;
+	window.app = window.app || {};
+	window.app.renderStaticIcons = function() {
+		document.querySelectorAll('[data-icon]').forEach(el => {
+			if (el.querySelector('svg')) return;
+			const k = el.getAttribute('data-icon');
+			if (STATIC_ICONS[k]) el.insertAdjacentHTML('afterbegin', STATIC_ICONS[k]);
+		});
+	};
+	window.svgStroke = svgStroke;
+	window.svgFill = svgFill;
+	window.STAR_SVG = STAR_SVG;
+	window.CHECK_SVG = CHECK_SVG;
+	window.PLUS_SVG = PLUS_SVG;
+	window.TRASH_SVG = TRASH_SVG;
+	window.GRID_VIEW_SVG = GRID_VIEW_SVG;
+	window.LIST_VIEW_SVG = LIST_VIEW_SVG;
+	window.MIN_VIEW_SVG = MIN_VIEW_SVG;
+	window.PICTURE_SVG = PICTURE_SVG;
+	window.COMPANY_SVG = COMPANY_SVG;
+	window.EYE_SVG = EYE_SVG;
+	window.TRI_ARROW_SVG = TRI_ARROW_SVG;
+	window.YT_SVG = YT_SVG;
+	window.DOTS_HTML = DOTS_HTML;
+	window.PLAY_BTN_SVG = PLAY_BTN_SVG;
+	window.PAUSE_BTN_SVG = PAUSE_BTN_SVG;
+	window.ANIME_BTN_SVG = ANIME_BTN_SVG;
+	window.EXPLORE_SEARCH_SVG = EXPLORE_SEARCH_SVG;
+	window.GALLERY_BTN_SVG = GALLERY_BTN_SVG;
+	window.INFO_BTN_SVG = INFO_BTN_SVG;
+	window.EXPAND_LEFT_SVG = EXPAND_LEFT_SVG;
+	window.EXPAND_RIGHT_SVG = EXPAND_RIGHT_SVG;
+	window.EXPAND_DOWN_SVG = EXPAND_DOWN_SVG;
+	window.EXPAND_UP_SVG = EXPAND_UP_SVG;
+	window.POPOVER_CHECK_SVG = POPOVER_CHECK_SVG;
+	window.FILTER_BTN_SVG = FILTER_BTN_SVG;
+	window.LUCKY_DICE_SVG = LUCKY_DICE_SVG;
+	window.SORT_DESC_SVG = SORT_DESC_SVG;
+	window.SORT_ASC_SVG = SORT_ASC_SVG;
+	window.TV_CARD_SVG = TV_CARD_SVG;
+	window.MOVIE_CARD_SVG = MOVIE_CARD_SVG;
+	window.W_BACK_SVG = W_BACK_SVG;
+	window.W_REFRESH_SVG = W_REFRESH_SVG;
+	window.W_MENU_SVG = W_MENU_SVG;
+	window.W_GEAR_SVG = W_GEAR_SVG;
+	window.W_PREV_SVG = W_PREV_SVG;
+	window.W_NEXT_SVG = W_NEXT_SVG;
+	window.W_FS_SVG = W_FS_SVG;
+	window.ARROW_LEFT_SVG = ARROW_LEFT_SVG;
+	window.ARROW_RIGHT_SVG = ARROW_RIGHT_SVG;
+	window.CAST_PLACEHOLDER_SVG = CAST_PLACEHOLDER_SVG;
+	window.SWITCH_TITLES_SVG = SWITCH_TITLES_SVG;
+	window.SWITCH_EPISODES_SVG = SWITCH_EPISODES_SVG;
+	window.OPTIONS_ITEMS_DATA = OPTIONS_ITEMS_DATA;
+	window.STATIC_ICONS = STATIC_ICONS;
 }
