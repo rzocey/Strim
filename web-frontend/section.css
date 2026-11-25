@@ -38,8 +38,10 @@
   cursor: pointer;
   display: flex;
   user-select: none;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.28s ease, border-color 0.28s ease;
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
 }
 .explore-card,
 .mylist-hub-card {
@@ -69,7 +71,9 @@
   inset: -10px;
   overflow: hidden;
   pointer-events: none;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.4s ease;
   transform: scale(1.03);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -91,19 +95,27 @@
     border-color: #ffffff66;
   }
   .explore-card-movies:hover {
-    box-shadow: 0 0 35px #3b82f659, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #3b82f659,
+      0 16px 38px #000000d9;
     border-color: #60a5fabf;
   }
   .explore-card-series:hover {
-    box-shadow: 0 0 35px #a855f759, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #a855f759,
+      0 16px 38px #000000d9;
     border-color: #c084fcbf;
   }
   .explore-card-companies:hover {
-    box-shadow: 0 0 35px #fa607f51, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #fa607f51,
+      0 16px 38px #000000d9;
     border-color: #fa607fbf;
   }
   .explore-card-people:hover {
-    box-shadow: 0 0 35px #fafc8449, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #fafc8449,
+      0 16px 38px #000000d9;
     border-color: #fafc84bf;
   }
   .explore-card:hover .explore-collage {
@@ -129,19 +141,27 @@
   border-color: #ffffff66;
 }
 .explore-card-movies.is-touch-hover {
-  box-shadow: 0 0 35px #3b82f659, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #3b82f659,
+    0 16px 38px #000000d9;
   border-color: #60a5fabf;
 }
 .explore-card-series.is-touch-hover {
-  box-shadow: 0 0 35px #a855f759, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #a855f759,
+    0 16px 38px #000000d9;
   border-color: #c084fcbf;
 }
 .explore-card-companies.is-touch-hover {
-  box-shadow: 0 0 35px #fa607f51, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #fa607f51,
+    0 16px 38px #000000d9;
   border-color: #fa607fbf;
 }
 .explore-card-people.is-touch-hover {
-  box-shadow: 0 0 35px #fafc8449, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #fafc8449,
+    0 16px 38px #000000d9;
   border-color: #fafc84bf;
 }
 .explore-card.is-touch-hover .explore-collage {
@@ -169,7 +189,9 @@
   background-position: center;
   border-radius: 4px;
   background-color: #ffffff0a;
-  transition: transform 0.26s ease-in, opacity 0.26s ease-in;
+  transition:
+    transform 0.26s ease-in,
+    opacity 0.26s ease-in;
   will-change: transform, opacity;
   transform-style: preserve-3d;
   backface-visibility: hidden;
@@ -191,7 +213,9 @@
   background-color: #ffffff0a;
   padding: 6px;
   box-sizing: border-box;
-  transition: transform 0.26s ease-in, opacity 0.26s ease-in,
+  transition:
+    transform 0.26s ease-in,
+    opacity 0.26s ease-in,
     background-color 0.35s ease-out;
 }
 .explore-card-companies .explore-collage-item:has(.explore-collage-img.loaded) {
@@ -206,7 +230,9 @@
 .explore-collage-item.flip-out {
   transform: rotateY(90deg) scale(0.9);
   opacity: 0.25;
-  transition: transform 0.26s ease-out, opacity 0.26s ease-out;
+  transition:
+    transform 0.26s ease-out,
+    opacity 0.26s ease-out;
 }
 .explore-card-overlay,
 .mylist-card-overlay {
@@ -362,7 +388,9 @@
   padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
   color: #eee;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -643,7 +671,9 @@
   cursor: pointer;
   padding: 0;
   line-height: 0;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 .year-sort-half svg {
   transition: transform 0.2s ease;
@@ -664,20 +694,20 @@
 :is(
     .filter-person-group.has-role-filter,
     .filter-person-group:has(
-        #person-role-wrap:not([style*="display: none"]):not(
-            [style*="display:none"]
-          )
-      )
+      #person-role-wrap:not([style*="display: none"]):not(
+          [style*="display:none"]
+        )
+    )
   )
   #filter-person-wrap
   .filter-multi-box,
 :is(
     .filter-ani-staff-group.has-role-filter,
     .filter-ani-staff-group:has(
-        #ani-staff-role-wrap:not([style*="display: none"]):not(
-            [style*="display:none"]
-          )
-      )
+      #ani-staff-role-wrap:not([style*="display: none"]):not(
+          [style*="display:none"]
+        )
+    )
   )
   #filter-ani-staff-wrap
   .filter-multi-box {
@@ -688,15 +718,15 @@
 :is(.filter-person-group, .filter-ani-staff-group):is(
     .has-role-filter,
     :has(
-        #person-role-wrap:not([style*="display: none"]):not(
-            [style*="display:none"]
-          )
-      ),
+      #person-role-wrap:not([style*="display: none"]):not(
+          [style*="display:none"]
+        )
+    ),
     :has(
-        #ani-staff-role-wrap:not([style*="display: none"]):not(
-            [style*="display:none"]
-          )
-      )
+      #ani-staff-role-wrap:not([style*="display: none"]):not(
+          [style*="display:none"]
+        )
+    )
   )
   .person-role-btn-group {
   border-top-left-radius: 0;
@@ -740,7 +770,9 @@
   cursor: pointer;
   line-height: 1;
   white-space: nowrap;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 .person-role-btn:first-child {
   border-right: 1px solid var(--glass-border);
@@ -864,7 +896,11 @@
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   user-select: none;
-  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    opacity 0.2s,
+    transform 0.15s;
   padding: 0;
   line-height: 0;
 }
@@ -930,7 +966,9 @@
   aspect-ratio: 16 / 9;
   box-shadow: 0 4px 12px #00000059;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.2s;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1055,7 +1093,10 @@
   user-select: none;
   background: #ffffff14;
   vertical-align: middle;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 @media (hover: hover) and (pointer: fine) {
   .rating-hint-btn:hover {
@@ -1162,22 +1203,30 @@
 @media (hover: hover) and (pointer: fine) {
   #hub-card-bookmark:hover {
     border-color: #378ef0bf;
-    box-shadow: 0 0 35px #378ef059, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #378ef059,
+      0 16px 38px #000000d9;
   }
 }
 #hub-card-bookmark.is-touch-hover {
   border-color: #378ef0bf;
-  box-shadow: 0 0 35px #378ef059, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #378ef059,
+    0 16px 38px #000000d9;
 }
 @media (hover: hover) and (pointer: fine) {
   #hub-card-custom:hover {
     border-color: #ffffffb3;
-    box-shadow: 0 0 35px #ffffff4d, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 35px #ffffff4d,
+      0 16px 38px #000000d9;
   }
 }
 #hub-card-custom.is-touch-hover {
   border-color: #ffffffb3;
-  box-shadow: 0 0 35px #ffffff4d, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 35px #ffffff4d,
+    0 16px 38px #000000d9;
 }
 .mylist-card-collage {
   position: absolute;
@@ -1219,7 +1268,10 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
   user-select: none;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1245,7 +1297,10 @@
   border: 1px solid #ffffff2e;
   color: #ffffffd9;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease,
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
     color 0.2s ease;
   user-select: none;
   flex-shrink: 0;
@@ -1300,7 +1355,9 @@
   justify-content: center;
   cursor: pointer;
   color: #fff;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
   flex-shrink: 0;
 }
 .btn-new-list-action.save {
@@ -1354,18 +1411,24 @@
   padding: 20px;
   background: #000000;
   border: solid 1.5px #ffffff1a;
-  box-shadow: 0 0 16px #ffffff14, 0 10px 28px #0000008c;
+  box-shadow:
+    0 0 16px #ffffff14,
+    0 10px 28px #0000008c;
   text-align: center;
 }
 @media (hover: hover) and (pointer: fine) {
   .custom-list-card:hover {
     border-color: #ffffffa6;
-    box-shadow: 0 0 30px #ffffff40, 0 16px 38px #000000d9;
+    box-shadow:
+      0 0 30px #ffffff40,
+      0 16px 38px #000000d9;
   }
 }
 .custom-list-card.is-touch-hover {
   border-color: #ffffffa6;
-  box-shadow: 0 0 30px #ffffff40, 0 16px 38px #000000d9;
+  box-shadow:
+    0 0 30px #ffffff40,
+    0 16px 38px #000000d9;
 }
 .custom-list-card-title {
   position: relative;
@@ -1394,7 +1457,10 @@
   font-size: 1.25rem;
   line-height: 1;
   z-index: 5;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .custom-list-del-btn:hover {
@@ -1442,7 +1508,9 @@
   border-bottom: 1px solid #ffffff24;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .popover-header:hover {
@@ -1469,7 +1537,9 @@
   color: #e4e4e7;
   cursor: pointer;
   border-bottom: 1px solid #ffffff14;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .popover-row:last-child {
   border-bottom: none;
@@ -1565,7 +1635,10 @@
   font-weight: 700;
   color: #ffffff;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease,
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
     color 0.2s ease;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1589,7 +1662,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s ease, transform 0.15s ease;
+  transition:
+    color 0.15s ease,
+    transform 0.15s ease;
   flex-shrink: 0;
   margin-left: 10px;
 }
@@ -1616,7 +1691,9 @@
   max-width: 260px;
   border: 1px solid #ffffff26;
   background: #ffffff0d;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .history-ep-row .ep-card:hover {
@@ -1635,8 +1712,10 @@
   max-height: 108px;
   background: #111111;
   overflow: hidden;
-  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  transition:
+    height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
   opacity: 1;
 }
 @media (max-width: 768px) {
@@ -1668,7 +1747,10 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .history-ep-delete-btn:hover {
@@ -1866,7 +1948,9 @@ html.page-reloading .glass-nav {
   line-height: 1.25;
   min-height: calc(1.25em * 3);
   justify-content: flex-start;
-  transition: transform 0.22s ease, opacity 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease;
 }
 #person-filmography-grid .card-meta {
   display: none !important;
@@ -1960,7 +2044,9 @@ html.page-reloading .glass-nav {
   outline: none;
   height: 34px;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 .person-role-select option {
   background: #141414;
@@ -2070,7 +2156,9 @@ html.page-reloading .glass-nav {
   padding-bottom: 1px;
   display: inline-block;
   line-height: 1.2;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 .si-meta-link.is-touch-hover {
   color: #ffffff;
@@ -2178,7 +2266,10 @@ html.page-reloading .glass-nav {
   justify-content: center;
   line-height: 1;
   user-select: none;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
     transform 0.2s ease;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -2256,7 +2347,9 @@ body.nav-bottom #view-source {
   border: solid 1px #1c1c21;
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 .scroll-row.cw-wide-mode.cw-count-1 .cw-wide-card {
   flex: 1 1 0;
@@ -2373,7 +2466,9 @@ body.nav-bottom #view-source {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .cw-wide-card:hover {
@@ -2467,7 +2562,9 @@ body.nav-bottom #view-source {
   font-size: 0.78rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .bottom-promo-btn:hover {
@@ -2495,7 +2592,10 @@ body.nav-bottom #view-source {
   border-color: #ffffff !important;
   filter: drop-shadow(0 0 10px #ffffffcc);
   box-shadow: 0 0 14px #ffffff66;
-  transition: border-color 0.35s ease, filter 0.35s ease, box-shadow 0.35s ease;
+  transition:
+    border-color 0.35s ease,
+    filter 0.35s ease,
+    box-shadow 0.35s ease;
 }
 .pe-seasons-container {
   border-bottom: 1px solid #ffffff14;
@@ -2611,7 +2711,10 @@ body.nav-bottom #view-source {
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .pe-season-btn.active {
   background: #ffffff;
@@ -2710,7 +2813,10 @@ body.nav-bottom #view-source {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .ep-cast-btn svg {
   width: 15px;
