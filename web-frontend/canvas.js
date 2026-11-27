@@ -6797,9 +6797,19 @@ Object.assign(app, {
         : "";
       let initialSeasonStr = "";
       const rawSeasonVal =
-        data.season || anilistMedia?.season || cachedAnimeInfo?.season || "";
+        [
+          data.season,
+          anilistMedia?.season,
+          cachedAnimeInfo?.broadcastSeason,
+          cachedAnimeInfo?.season,
+        ].find(
+          (v) =>
+            typeof v === "string" &&
+            /^(?:WINTER|SPRING|SUMMER|FALL)$/i.test(v.trim()),
+        ) || "";
       if (isAnimeShowMeta && rawSeasonVal) {
-        initialSeasonStr = `${rawSeasonVal.charAt(0).toUpperCase()}${rawSeasonVal.slice(1).toLowerCase()} `;
+        const sTrim = rawSeasonVal.trim();
+        initialSeasonStr = `${sTrim.charAt(0).toUpperCase()}${sTrim.slice(1).toLowerCase()} `;
       }
       const aniFmt = anilistMedia?.format || cachedAnimeInfo?.animeFormat || "";
       const rawShowType =
@@ -7197,8 +7207,15 @@ Object.assign(app, {
             const gEl = this.$g("si-genres-val");
             if (gEl) gEl.textContent = info.genres.join(", ");
           }
-          if (info.season && isJapan && isAnim) {
-            const sName = `${info.season.charAt(0).toUpperCase()}${info.season.slice(1).toLowerCase()} `;
+          const infoSeasonStr =
+            [info.broadcastSeason, info.season].find(
+              (v) =>
+                typeof v === "string" &&
+                /^(?:WINTER|SPRING|SUMMER|FALL)$/i.test(v.trim()),
+            ) || "";
+          if (infoSeasonStr && isJapan && isAnim) {
+            const sTrim = infoSeasonStr.trim();
+            const sName = `${sTrim.charAt(0).toUpperCase()}${sTrim.slice(1).toLowerCase()} `;
             const sEl = this.$g("si-anime-season");
             if (sEl) sEl.textContent = sName;
             this.fitShowinfoMeta();
@@ -9585,9 +9602,20 @@ Object.assign(app, {
         if (!this.animeCache) this.animeCache = {};
         const existingS =
           this.animeCache[`${this.currentShow.id}_s${sNum}`] || {};
+        const validSeasonStr =
+          [
+            sCfg._aniEntry.broadcastSeason,
+            sCfg._aniEntry.season,
+            existingS.season,
+          ].find(
+            (v) =>
+              typeof v === "string" &&
+              /^(?:WINTER|SPRING|SUMMER|FALL)$/i.test(v.trim()),
+          ) || null;
         this.animeCache[`${this.currentShow.id}_s${sNum}`] = {
           ...existingS,
           ...sCfg._aniEntry,
+          season: validSeasonStr,
           aniId: sCfg._aniEntry.id,
           malId: sCfg._aniEntry.idMal || sCfg._aniEntry.id,
           _showId: String(this.currentShow.id),

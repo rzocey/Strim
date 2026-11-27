@@ -5073,6 +5073,12 @@ var app = {
         return;
       if (!data) return;
       let triggerNext = false;
+      const isEmbedMaster = Boolean(
+        (data && data.source === "embedmaster_player") ||
+        (event.origin &&
+          (event.origin.includes("embdmstrplayer.com") ||
+            event.origin.includes("embedmaster.link"))),
+      );
       const handleProg = (s, e, prog, dur, evType) => {
         const curId = this.watchState.id;
         const isTv =
@@ -5116,7 +5122,37 @@ var app = {
           triggerNext = true;
         }
       };
-      if (data.type === "MEDIA_DATA" && data.data) {
+      if (isEmbedMaster) {
+        const emEv = String(data.event || "").toLowerCase();
+        const emKey = `${this.watchState.id}_${this.watchState.season}_${this.watchState.episode}`;
+        if (this.watchState._emKey !== emKey) {
+          this.watchState._emKey = emKey;
+          this.watchState._emDur = 0;
+          this.watchState._emTime = 0;
+        }
+        if (emEv === "duration") {
+          const emDur = parseFloat(data.info || "0");
+          if (!isNaN(emDur) && emDur > 0) this.watchState._emDur = emDur;
+        } else if (emEv === "time" || emEv === "seek") {
+          const emProg = parseFloat(data.info || "0");
+          if (!isNaN(emProg) && emProg > 0) this.watchState._emTime = emProg;
+          handleProg(
+            this.watchState.season,
+            this.watchState.episode,
+            emProg,
+            this.watchState._emDur || 0,
+            emEv,
+          );
+        } else if (emEv === "pause" || emEv === "ended") {
+          handleProg(
+            this.watchState.season,
+            this.watchState.episode,
+            this.watchState._emTime || 0,
+            this.watchState._emDur || 0,
+            emEv,
+          );
+        }
+      } else if (data.type === "MEDIA_DATA" && data.data) {
         let list = Array.isArray(data.data) ? data.data : [data.data];
         let cur = list.find((m) => String(m.id) === String(this.watchState.id));
         if (cur) {
