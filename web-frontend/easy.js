@@ -199,26 +199,26 @@ const STATIC_ICONS = {
   back: svgStroke('<path d="M19 12H5M12 19l-7-7 7-7"/>', 22, 22, 2.5),
   home: svgStroke(
     '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/>',
-    24,
+    22,
   ),
   explore: svgStroke(
     '<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 5.93h14.14M4.93 18.07h14.14"/>',
-    24,
+    22,
   ),
   mylist: svgFill(
     '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
-    24,
-    24,
+    22,
+    22,
     'style="flex-shrink:0;"',
   ),
   search: svgStroke(
-    '<circle cx="10" cy="10" r="7"/><path d="m22 22-7-7"/>',
-    24,
+    '<circle cx="10.5" cy="10.5" r="7.5"/><path d="m21 21-5.2-5.2"/>',
+    22,
+    22,
+    2.4,
   ),
-  options: svgStroke(
-    '<path d="M3 4h18M3 12h18M3 20h18M14 2v4M8 10v4M16 18v4"/>',
-    24,
-  ),
+  options:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="22" viewBox="0 0 24 30" fill="currentColor" stroke="none"><rect width="16" height="2.5" x="4" y="3.75" rx="1" /><rect width="3.5" height="7" x="6" y="1.5" rx="1" /><rect width="16" height="2.5" x="4" y="13.75" rx="1" /><rect width="3.5" height="7" x="14" y="11.5" rx="1" /><rect width="16" height="2.5" x="4" y="23.75" rx="1" /><rect width="3.5" height="7" x="9" y="21.5" rx="1" /></svg>',
   "col-nav": svgStroke(
     '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>',
     24,

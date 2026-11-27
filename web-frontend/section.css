@@ -86,37 +86,10 @@
   }
   .explore-card:hover,
   .mylist-hub-card:hover {
-    box-shadow: 0 16px 38px #000000d9;
-  }
-  .explore-card:hover {
-    border-color: #ffffff00;
-  }
-  .mylist-hub-card:hover {
-    border-color: #ffffff66;
-  }
-  .explore-card-movies:hover {
+    border-color: #ffffffb3;
     box-shadow:
-      0 0 35px #3b82f659,
+      0 0 35px #ffffff4d,
       0 16px 38px #000000d9;
-    border-color: #60a5fabf;
-  }
-  .explore-card-series:hover {
-    box-shadow:
-      0 0 35px #a855f759,
-      0 16px 38px #000000d9;
-    border-color: #c084fcbf;
-  }
-  .explore-card-companies:hover {
-    box-shadow:
-      0 0 35px #fa607f51,
-      0 16px 38px #000000d9;
-    border-color: #fa607fbf;
-  }
-  .explore-card-people:hover {
-    box-shadow:
-      0 0 35px #fafc8449,
-      0 16px 38px #000000d9;
-    border-color: #fafc84bf;
   }
   .explore-card:hover .explore-collage {
     transform: scale(1.07);
@@ -132,37 +105,10 @@
 }
 .explore-card.is-touch-hover,
 .mylist-hub-card.is-touch-hover {
-  box-shadow: 0 16px 38px #000000d9;
-}
-.explore-card.is-touch-hover {
-  border-color: #ffffff00;
-}
-.mylist-hub-card.is-touch-hover {
-  border-color: #ffffff66;
-}
-.explore-card-movies.is-touch-hover {
+  border-color: #ffffffb3;
   box-shadow:
-    0 0 35px #3b82f659,
+    0 0 35px #ffffff4d,
     0 16px 38px #000000d9;
-  border-color: #60a5fabf;
-}
-.explore-card-series.is-touch-hover {
-  box-shadow:
-    0 0 35px #a855f759,
-    0 16px 38px #000000d9;
-  border-color: #c084fcbf;
-}
-.explore-card-companies.is-touch-hover {
-  box-shadow:
-    0 0 35px #fa607f51,
-    0 16px 38px #000000d9;
-  border-color: #fa607fbf;
-}
-.explore-card-people.is-touch-hover {
-  box-shadow:
-    0 0 35px #fafc8449,
-    0 16px 38px #000000d9;
-  border-color: #fafc84bf;
 }
 .explore-card.is-touch-hover .explore-collage {
   transform: scale(1.07);
@@ -395,16 +341,16 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .sheet-item:hover {
-    background: #ffffff14;
+    background: #353535;
     color: #ffffff;
   }
 }
 .sheet-item.is-touch-hover {
-  background: #ffffff14;
+  background: #353535;
   color: #ffffff;
 }
 .sheet-item:active {
-  background: #ffffff24;
+  background: #353535;
 }
 .sheet-item-icon {
   display: inline-flex;
@@ -1199,34 +1145,6 @@
   .mylist-hub-card {
     width: 100%;
   }
-}
-@media (hover: hover) and (pointer: fine) {
-  #hub-card-bookmark:hover {
-    border-color: #378ef0bf;
-    box-shadow:
-      0 0 35px #378ef059,
-      0 16px 38px #000000d9;
-  }
-}
-#hub-card-bookmark.is-touch-hover {
-  border-color: #378ef0bf;
-  box-shadow:
-    0 0 35px #378ef059,
-    0 16px 38px #000000d9;
-}
-@media (hover: hover) and (pointer: fine) {
-  #hub-card-custom:hover {
-    border-color: #ffffffb3;
-    box-shadow:
-      0 0 35px #ffffff4d,
-      0 16px 38px #000000d9;
-  }
-}
-#hub-card-custom.is-touch-hover {
-  border-color: #ffffffb3;
-  box-shadow:
-    0 0 35px #ffffff4d,
-    0 16px 38px #000000d9;
 }
 .mylist-card-collage {
   position: absolute;
@@ -2309,12 +2227,12 @@ html.page-reloading .glass-nav {
 
 #view-person,
 #view-source {
-  padding-bottom: 48px;
-  transition: padding-bottom 0.28s ease;
+  padding-bottom: 60px;
+  transition: padding-bottom 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
-body.nav-bottom #view-person,
-body.nav-bottom #view-source {
-  padding-bottom: 110px;
+body:has(.glass-nav[class*="pos-bottom-"]) #view-person,
+body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
+  padding-bottom: 120px;
 }
 .mylist-collage-item {
   position: relative;
@@ -2617,10 +2535,10 @@ body.nav-bottom #view-source {
   border-radius: 6px;
 }
 .person-ep-box {
-  background: #18181bf5;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid #ffffff2e;
+  background: #0000007e;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #ffffff33;
   border-radius: 16px;
   width: 92%;
   max-width: 520px;
@@ -2779,7 +2697,7 @@ body.nav-bottom #view-source {
     border-color: #ffffff4d;
   }
   .pe-ep-row:hover {
-    background: #ffffff12;
+    background: #353535;
   }
 }
 .pe-season-btn.is-touch-hover:not(.active) {

@@ -523,7 +523,7 @@ Object.assign(app, {
   syncModalOpen() {
     if (
       !document.querySelector(
-        ".sheet-overlay.active, .custom-prompt-overlay.active, #trailer-modal.active, #lucky-modal.active, #media-lightbox-modal.active, #storage-modal.active, #customize-modal.active, #about-modal.active",
+        ".sheet-overlay.active, .custom-prompt-overlay.active, #trailer-modal.active, #media-lightbox-modal.active, #storage-modal.active, #customize-modal.active, #about-modal.active",
       )
     ) {
       document.body.classList.remove("modal-open");
@@ -960,7 +960,6 @@ Object.assign(app, {
       const activeModals = [
         ["custom-prompt", () => this.closeCustomPrompt(null, true)],
         ["media-lightbox-modal", () => this.closeMediaLightbox(null, true)],
-        ["lucky-modal", () => this.cancelLucky(true)],
         ["trailer-modal", () => this.closeTrailer(null, true)],
         [
           "storage-modal",
@@ -1469,6 +1468,16 @@ Object.assign(app, {
       viewId !== "showinfo"
     ) {
       this.returnFromShowinfoToExplore = false;
+    }
+    if (
+      viewId !== "movies" &&
+      viewId !== "shows" &&
+      viewId !== "series" &&
+      viewId !== "showinfo" &&
+      viewId !== "watch"
+    ) {
+      if (typeof this.resetExploreRandom === "function")
+        this.resetExploreRandom();
     }
     let targetView = viewId;
     if (
@@ -3337,282 +3346,6 @@ Object.assign(app, {
     }
     this.resetSearchYearSort();
   },
-  luckyShuffleTimer: null,
-  setLuckyPoster: function (item) {
-    const pImg = this.$g("lucky-poster");
-    const tEl = this.$g("lucky-title");
-    if (pImg) {
-      pImg.style.visibility = "visible";
-      pImg.style.opacity = "1";
-      pImg.classList.add("loaded");
-      pImg.src = this.getImg(item.poster_path, "poster");
-    }
-    if (tEl) tEl.innerText = item.title || item.name;
-  },
-  resetLuckyUI: function (isRolling = false) {
-    const wrap = this.$g("lucky-poster-wrap");
-    const box = document.querySelector(".lucky-box");
-    const rollBtn = this.$g("lucky-roll-btn");
-    const watchBtn = this.$g("lucky-watch-btn");
-    if (wrap) wrap.classList.remove("winner");
-    if (box) {
-      box.classList.remove("winner");
-      box.classList.toggle("rolling", isRolling);
-    }
-    if (rollBtn) rollBtn.style.display = "none";
-    if (watchBtn) watchBtn.style.display = "none";
-  },
-  async startFeelingLucky() {
-    this.startLoader();
-    const fState = this.getExploreFilterState();
-    const {
-      hasAnime,
-      normalGenreIds,
-      genre2Ids,
-      years,
-      countries,
-      seasonIds,
-      aniStudioIds,
-      aniStaffIds,
-    } = fState;
-    const type = this.$g("filter-type")?.value || "all";
-    const isYearSortActive = Boolean(this.yearSortOrder);
-    const seen = new Set();
-    let items = [];
-    if (hasAnime) {
-      const isMovie = this.exploreType === "movie";
-      let allowedLuckyIds = await this.resolveAniStudioStaffIds(
-        aniStudioIds,
-        aniStaffIds,
-      );
-      if (allowedLuckyIds !== null && allowedLuckyIds.length === 0) {
-        this.stopLoader();
-        return;
-      }
-      const hasSpecificFilters =
-        seasonIds.length > 0 ||
-        genre2Ids.length > 0 ||
-        years.length > 0 ||
-        countries.length > 0 ||
-        allowedLuckyIds !== null;
-      const page1 = hasSpecificFilters ? 1 : Math.floor(Math.random() * 3) + 1;
-      const { gqlVars } = this.buildAniExploreVars(
-        fState,
-        type,
-        isYearSortActive,
-        this.yearSortOrder,
-        page1,
-        35,
-      );
-      if (type === "all" && !isYearSortActive) {
-        const rSorts = [
-          ["POPULARITY_DESC"],
-          ["TRENDING_DESC", "POPULARITY_DESC"],
-          ["START_DATE_DESC"],
-        ];
-        gqlVars.sort = rSorts[Math.floor(Math.random() * rSorts.length)];
-      }
-      if (allowedLuckyIds !== null) gqlVars.id_in = allowedLuckyIds;
-      const gqlQuery = this.buildAniCatalogGql(
-        "id idMal format episodes season seasonYear title { romaji english userPreferred } coverImage { extraLarge large medium } startDate { year month day } countryOfOrigin genres studios(isMain: true) { nodes { name isAnimationStudio } } trailer { id site }",
-      );
-      try {
-        let aniRes = await this.aniApi(gqlQuery, gqlVars);
-        let mList = aniRes?.data?.Page?.media || [];
-        if (mList.length === 0 && gqlVars.page !== 1) {
-          gqlVars.page = 1;
-          aniRes = await this.aniApi(gqlQuery, gqlVars);
-          mList = aniRes?.data?.Page?.media || [];
-        }
-        if (seasonIds.length > 0) {
-          mList = mList.filter((m) => {
-            const s = this.resolveAnimeSeason(m);
-            return s && seasonIds.includes(s);
-          });
-        }
-        mList.forEach((m) => {
-          const img =
-            this.getAniCover(m.coverImage) ||
-            m.coverImage?.extraLarge ||
-            m.coverImage?.large;
-          if (img && !seen.has("ani_" + m.id)) {
-            seen.add("ani_" + m.id);
-            const candidate = this.toAniCard(m, isMovie);
-            if (candidate && !this.isBlocked(candidate, candidate.media_type)) {
-              items.push(candidate);
-            }
-          }
-        });
-        if (countries.length > 1) {
-          items = items.filter((i) => countries.includes(i.country));
-        }
-      } catch (e) {}
-    } else {
-      const baseParams = this.buildTmdbDiscoverParams(fState);
-      const probe = await this.api(`/discover/${this.exploreType}`, {
-        ...baseParams,
-        page: 1,
-        sort_by: "popularity.desc",
-      }).catch(() => null);
-      const maxP = Math.min(probe?.total_pages || 1, 35);
-      const getRandomPage = () => Math.floor(Math.random() * maxP) + 1;
-      const queries = [
-        this.api(`/discover/${this.exploreType}`, {
-          ...baseParams,
-          page: getRandomPage(),
-          sort_by: "popularity.desc",
-        }),
-        this.api(`/discover/${this.exploreType}`, {
-          ...baseParams,
-          page: getRandomPage(),
-          sort_by: "vote_count.desc",
-        }),
-        this.api(`/discover/${this.exploreType}`, {
-          ...baseParams,
-          page: getRandomPage(),
-          sort_by: "vote_average.desc",
-          "vote_count.gte": 40,
-        }),
-      ];
-      if (maxP > 1) {
-        queries.push(
-          this.api(`/discover/${this.exploreType}`, {
-            ...baseParams,
-            page: getRandomPage(),
-            sort_by: "popularity.desc",
-          }),
-        );
-      }
-      if (countries.length === 0) {
-        const intlHubs = [
-          "KR",
-          "JP",
-          "GB",
-          "FR",
-          "ES",
-          "IN",
-          "DE",
-          "IT",
-          "ID",
-          "TH",
-          "CA",
-          "AU",
-          "MX",
-          "SE",
-        ];
-        const randHub = intlHubs[Math.floor(Math.random() * intlHubs.length)];
-        queries.push(
-          this.api(`/discover/${this.exploreType}`, {
-            ...baseParams,
-            with_origin_country: randHub,
-            page: Math.floor(Math.random() * 5) + 1,
-            sort_by: "popularity.desc",
-          }),
-        );
-      }
-      const responses = await Promise.all(queries);
-      responses.forEach((res) => {
-        (res.results || []).forEach((i) => {
-          if (
-            i &&
-            i.poster_path &&
-            !seen.has(String(i.id)) &&
-            !this.isBlocked(i, this.exploreType)
-          ) {
-            seen.add(String(i.id));
-            items.push(i);
-          }
-        });
-      });
-      if (normalGenreIds.length > 0 || genre2Ids.length > 0)
-        items = items.filter((i) => !this.isAnimeItem(i));
-      if (years.length > 1)
-        items = items.filter((i) => years.includes(this.getItemYear(i)));
-    }
-    if (items.length === 0) return;
-    items.sort(() => Math.random() - 0.5);
-    const modal = this.$g("lucky-modal");
-    const wrap = this.$g("lucky-poster-wrap");
-    const pImg = this.$g("lucky-poster");
-    const tEl = this.$g("lucky-title");
-    const rollBtn = this.$g("lucky-roll-btn");
-    const watchBtn = this.$g("lucky-watch-btn");
-    const box = document.querySelector(".lucky-box");
-    this.resetLuckyUI(true);
-    if (tEl) tEl.innerText = "Rolling the reels...";
-    const tooltip = this.$g("lucky-tooltip");
-    if (tooltip) {
-      const dismissed =
-        this.$storeGet("sh_lucky_tooltip_dismissed", false) === true;
-      tooltip.style.display = dismissed ? "none" : "flex";
-    }
-    modal.classList.add("active");
-    document.body.classList.add("modal-open");
-    if (!window.history.state || window.history.state.modal !== "lucky") {
-      window.history.pushState(
-        {
-          modal: "lucky",
-          view: this.currentView,
-        },
-        "",
-        window.location.href,
-      );
-    }
-    let count = 0;
-    const totalSteps = 28;
-    let delay = 60;
-    const winner = items[Math.floor(Math.random() * items.length)];
-    this.luckyWinner = winner;
-    const spinReel = () => {
-      const rand = items[Math.floor(Math.random() * items.length)];
-      this.setLuckyPoster(rand);
-      count++;
-      if (count < totalSteps) {
-        if (count >= 15) {
-          delay += Math.floor((count - 13) * 9);
-        }
-        this.luckyShuffleTimer = setTimeout(spinReel, delay);
-      } else {
-        this.setLuckyPoster(winner);
-        if (box) {
-          box.classList.remove("rolling");
-          box.classList.add("winner");
-        }
-        wrap.classList.add("winner");
-        if (rollBtn) rollBtn.style.display = "inline-flex";
-        if (watchBtn) watchBtn.style.display = "inline-flex";
-      }
-    };
-    spinReel();
-  },
-  openLuckyShow: function () {
-    if (!this.luckyWinner) return;
-    const winner = this.luckyWinner;
-    this.cancelLucky();
-    this.openShowinfo(winner.id, winner.media_type || this.exploreType);
-  },
-  dismissLuckyTooltip: function () {
-    this.$storeSet("sh_lucky_tooltip_dismissed", true);
-    const tooltip = this.$g("lucky-tooltip");
-    if (tooltip) tooltip.style.display = "none";
-  },
-  cancelLucky: function (fromPopState = false, e = null) {
-    if (e && e.target && e.target.id !== "lucky-modal") return;
-    clearTimeout(this.luckyShuffleTimer);
-    if (
-      !fromPopState &&
-      window.history.state &&
-      window.history.state.modal === "lucky"
-    ) {
-      window.history.back();
-      return;
-    }
-    const modal = this.$g("lucky-modal");
-    if (modal) modal.classList.remove("active");
-    this.syncModalOpen();
-    this.resetLuckyUI(false);
-    this.luckyWinner = null;
-  },
   searchFilter: "all",
   setSearchFilter: function (type) {
     this.searchFilter = type;
@@ -4442,7 +4175,7 @@ Object.assign(app, {
           EXPLORE_SEARCH_SVG(18, 18) +
           '<span>Search</span></button><div class="explore-entity-search-wrap" id="explore-entity-search-wrap" style="display:none;"><button type="button" id="explore-entity-search-close" class="explore-entity-search-close" onclick="app.closeExploreEntitySearch()">&times;</button><input type="text" id="explore-entity-search-input" class="explore-entity-search-input" placeholder="Search..." autocomplete="off" oninput="app.onExploreEntitySearchInput(this.value)" onkeydown="if(event.key===\'Enter\')app.triggerExploreEntitySearch();else if(event.key===\'Escape\')app.closeExploreEntitySearch()"></div><button type="button" class="btn-anime" id="btn-explore-anime" onclick="app.toggleAnimeExplore()">' +
           ANIME_BTN_SVG(18, 18) +
-          '<span>Anime</span></button><button type="button" class="btn-lucky" id="btn-explore-random" onclick="app.startFeelingLucky()">' +
+          '<span>Anime</span></button><button type="button" class="btn-lucky" id="btn-explore-random" onclick="app.toggleExploreRandom()">' +
           LUCKY_DICE_SVG(18, 18) +
           '<span>Random</span></button><div class="filter-minimized-info" id="filter-minimized-info"></div>';
       } else if (isPerson) {
@@ -4774,9 +4507,6 @@ ${actRow("Reset User Data", "Permanently erases all saved preferences, custom li
     );
     h.push(
       '<div class="custom-prompt-overlay" id="custom-prompt" onclick="app.closeCustomPrompt(event)" onwheel="event.preventDefault()"><div class="custom-prompt-box" onclick="event.stopPropagation()"><div class="custom-prompt-title">Confirm Action</div><div class="custom-prompt-msg" id="custom-prompt-msg">Are you sure?</div><div class="custom-prompt-actions"><button class="custom-prompt-btn cancel" onclick="app.closeCustomPrompt()">Cancel</button><button class="custom-prompt-btn confirm" id="custom-prompt-confirm-btn">OK</button></div></div></div>',
-    );
-    h.push(
-      '<div id="lucky-modal" onclick="app.cancelLucky(false,event)"><div class="lucky-modal-wrapper"><div class="lucky-tooltip" id="lucky-tooltip"><span class="lucky-tooltip-text">Randomly picks a movie or show based on current filters</span><button type="button" class="lucky-tooltip-close" onclick="app.dismissLuckyTooltip()">&times;</button></div><div class="lucky-box"><button type="button" class="lucky-close-btn" onclick="app.cancelLucky()">&times;</button><div class="lucky-poster-wrap" id="lucky-poster-wrap"><img id="lucky-poster" class="lucky-poster-img" src=""></div><div class="lucky-title" id="lucky-title">Rolling the reels...</div><div class="lucky-actions"><button type="button" class="lucky-roll-btn" id="lucky-roll-btn" onclick="app.startFeelingLucky()" style="display:none;">Roll Again</button><button type="button" class="lucky-watch-btn" id="lucky-watch-btn" onclick="app.openLuckyShow()" style="display:none;">Watch</button></div></div></div></div>',
     );
     h.push(
       '<div id="media-lightbox-modal" onclick="app.closeMediaLightbox(event)"><div class="dots-loader" id="media-lightbox-loader" style="display:none;"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="media-lightbox-content" onclick="event.stopPropagation()"><img id="media-lightbox-img" class="media-lightbox-img" src="" alt="Media Preview"></div></div>',

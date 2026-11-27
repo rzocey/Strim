@@ -33,6 +33,10 @@ Object.assign(app, {
   currentEpisodes: [],
   currentOmdbEpisodes: {},
   explorePrefs: { movie: {}, tv: {}, person: {}, company: {} },
+  exploreRandomActive: false,
+  exploreRandomPool: [],
+  exploreRandomAniPool: [],
+  exploreRandomPersonList: null,
   closeTrailer(e = null, fromPopState = false) {
     this.toggleAppModal("trailer", false, e, fromPopState);
   },
@@ -60,6 +64,7 @@ Object.assign(app, {
     const title = titleMap[type] || "Movies";
     this.setActiveView("explore", viewId);
     const isSameType = this.exploreType === type;
+    if (!isSameType) this.resetExploreRandom();
     this.exploreType = type;
     this.$g("explore-hub").style.display = "none";
     const ehHeader = this.$g("explore-hub-header");
@@ -108,6 +113,7 @@ Object.assign(app, {
     this.resetExplore(true);
   },
   showExploreHub(pushState = false) {
+    this.resetExploreRandom();
     document.body.classList.add("explore-hub-open");
     document.documentElement.classList.add("explore-hub-open");
     this.$g("explore-hub").style.display = "grid";
@@ -1594,6 +1600,7 @@ Object.assign(app, {
     ]);
     clearTimeout(this._homeLoadedSafetyTimer);
     this.$g("view-home")?.classList.add("loaded");
+    this.updateArrows();
     if (typeof this.initAndroidPromoBanner === "function")
       this.initAndroidPromoBanner();
     this.startRowAutoSlide();
@@ -1908,6 +1915,36 @@ Object.assign(app, {
       (item) => item.id === "anime",
     );
     btn.classList.toggle("active", hasAnime);
+  },
+  shuffleArray: function (arr) {
+    if (!Array.isArray(arr)) return arr;
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  },
+  updateRandomBtnUI: function () {
+    const btn = this.$g("btn-explore-random");
+    if (!btn) return;
+    btn.classList.toggle("active", Boolean(this.exploreRandomActive));
+  },
+  resetExploreRandom: function (skipUI = false) {
+    this.exploreRandomActive = false;
+    this.exploreRandomPool = [];
+    this.exploreRandomAniPool = [];
+    this.exploreRandomPersonList = null;
+    if (!skipUI) this.updateRandomBtnUI();
+  },
+  toggleExploreRandom: function () {
+    this.exploreRandomActive = !this.exploreRandomActive;
+    this.exploreRandomPool = [];
+    this.exploreRandomAniPool = [];
+    this.exploreRandomPersonList = null;
+    this.updateRandomBtnUI();
+    this.resetExplore(false);
   },
   updateGenre2Visibility: function () {
     const hasAnime = this.getMultiList("genre").some(
@@ -2928,6 +2965,7 @@ Object.assign(app, {
     bar.classList.toggle("minimized", !this.exploreFilterExpanded);
     this.updateExploreEntitySearchUI();
     this.updateAnimeBtnUI();
+    this.updateRandomBtnUI();
     this.updateYearSortVisibility();
     this.updatePersonRoleVisibility();
   },
@@ -2971,6 +3009,9 @@ Object.assign(app, {
     this._personExploreRawPage = 0;
     this.exploreSeenIds = new Set();
     this.exploreSeenTitles = new Set();
+    this.exploreRandomPool = [];
+    this.exploreRandomAniPool = [];
+    this.exploreRandomPersonList = null;
     this.exploreReqId = (this.exploreReqId || 0) + 1;
     if (forceClear && this.exploreScrollPos)
       this.exploreScrollPos[this.exploreType] = 0;
@@ -3024,6 +3065,20 @@ Object.assign(app, {
     this.updatePersonRoleVisibility();
     this.$g("explore-grid").innerHTML = "";
     this.loadExplore();
+  },
+  appendExploreGridHtml(grid, html, isReplace) {
+    if (!grid) return;
+    if (isReplace) {
+      grid.innerHTML = html;
+      return;
+    }
+    const bLoader = grid.querySelector(".dots-loader");
+    if (bLoader && bLoader.parentNode === grid) {
+      bLoader.insertAdjacentHTML("beforebegin", html);
+      bLoader.remove();
+    } else {
+      grid.insertAdjacentHTML("beforeend", html);
+    }
   },
   async runExploreBatched(items, concurrency, currentReqId, workerFn) {
     const out = [];
@@ -3419,14 +3474,15 @@ Object.assign(app, {
         this._explorePeopleCache[cacheKey] = collected;
       }
       this.exploreLoading = false;
-      if (bottomLoader && bottomLoader.parentNode) bottomLoader.remove();
       if (collected.length > 0) {
         const html = collected
           .map((p) => this.buildPersonExploreCard(p))
           .join("");
-        if (pg === 1 || !grid.querySelector(".poster-card"))
-          grid.innerHTML = html;
-        else grid.insertAdjacentHTML("beforeend", html);
+        this.appendExploreGridHtml(
+          grid,
+          html,
+          pg === 1 || !grid.querySelector(".poster-card"),
+        );
         this.markImgsLoaded(grid.querySelectorAll("img"));
         if (countries.length === 0)
           this.enrichPeopleCountriesQueue(collected, currentReqId);
@@ -4091,7 +4147,6 @@ Object.assign(app, {
         this.$sessSet("str_c_comp_cache_v5", this._exploreCompaniesCache);
       }
       this.exploreLoading = false;
-      if (bottomLoader && bottomLoader.parentNode) bottomLoader.remove();
       if (hasTypeFilter && types.length === 1 && types[0] === "platform") {
         this.exploreHasMore = false;
       }
@@ -4099,9 +4154,11 @@ Object.assign(app, {
         const html = collected
           .map((c) => this.buildCompanyExploreCard(c))
           .join("");
-        if (pg === 1 || !grid.querySelector(".poster-card"))
-          grid.innerHTML = html;
-        else grid.insertAdjacentHTML("beforeend", html);
+        this.appendExploreGridHtml(
+          grid,
+          html,
+          pg === 1 || !grid.querySelector(".poster-card"),
+        );
         this.markImgsLoaded(grid.querySelectorAll("img"));
       } else if (isDefaultTiered && pg < 4) {
         this.explorePage++;
@@ -4396,14 +4453,15 @@ Object.assign(app, {
         }
         if (currentReqId !== this.exploreReqId) return;
         this.exploreLoading = false;
-        if (bottomLoader && bottomLoader.parentNode) bottomLoader.remove();
         if (collected.length > 0) {
           const html = collected
             .map((c) => this.buildCompanyExploreCard(c))
             .join("");
-          if (pg === 1 || !grid.querySelector(".poster-card"))
-            grid.innerHTML = html;
-          else grid.insertAdjacentHTML("beforeend", html);
+          this.appendExploreGridHtml(
+            grid,
+            html,
+            pg === 1 || !grid.querySelector(".poster-card"),
+          );
           this.markImgsLoaded(grid.querySelectorAll("img"));
         } else if (pg === 1 && !grid.querySelector(".poster-card")) {
           grid.innerHTML = '<div class="msg-box">Nothing to show.</div>';
@@ -4481,14 +4539,15 @@ Object.assign(app, {
         }
         if (currentReqId !== this.exploreReqId) return;
         this.exploreLoading = false;
-        if (bottomLoader && bottomLoader.parentNode) bottomLoader.remove();
         if (collected.length > 0) {
           const html = collected
             .map((p) => this.buildPersonExploreCard(p))
             .join("");
-          if (pg === 1 || !grid.querySelector(".poster-card"))
-            grid.innerHTML = html;
-          else grid.insertAdjacentHTML("beforeend", html);
+          this.appendExploreGridHtml(
+            grid,
+            html,
+            pg === 1 || !grid.querySelector(".poster-card"),
+          );
           this.markImgsLoaded(grid.querySelectorAll("img"));
           if (countries.length === 0)
             this.enrichPeopleCountriesQueue(collected, currentReqId);
@@ -4606,6 +4665,7 @@ Object.assign(app, {
     }
     try {
       let results = [];
+      const isRandMode = Boolean(this.exploreRandomActive);
       if (!hasAnime) this.lastActiveAnime = false;
       if (hasAnime) {
         const isMovie = this.exploreType === "movie";
@@ -4647,12 +4707,34 @@ Object.assign(app, {
                 ? 20
                 : 18
               : 12;
+        let aniReqPage = this.explorePage;
+        if (isRandMode) {
+          if (
+            !Array.isArray(this.exploreRandomAniPool) ||
+            this.explorePage === 1 ||
+            this.exploreRandomAniPool.length === 0
+          ) {
+            const hasNarrowAni =
+              allowedAniIds !== null ||
+              seasonIds.length > 0 ||
+              years.length > 0 ||
+              genre2Ids.length > 0 ||
+              countries.length > 0 ||
+              aniStudioIds.length > 0 ||
+              aniStaffIds.length > 0;
+            const maxAniPg = hasNarrowAni ? 3 : 8;
+            this.exploreRandomAniPool = this.shuffleArray(
+              Array.from({ length: maxAniPg }, (_, idx) => idx + 1),
+            );
+          }
+          aniReqPage = this.exploreRandomAniPool.shift() || 1;
+        }
         const { gqlVars } = this.buildAniExploreVars(
           fState,
           type,
           isYearSortActive,
           this.yearSortOrder,
-          this.explorePage,
+          aniReqPage,
           isAllTypesCombined ? subPerPage : perPage,
         );
         if (allowedAniIds !== null) gqlVars.id_in = allowedAniIds;
@@ -4677,23 +4759,26 @@ Object.assign(app, {
           gqlQuery = this.buildAniCatalogGql(aniFields, true);
         }
         const isCached = this.isAniCached(gqlQuery, gqlVars);
-        let bottomLoader = null;
-        if (!isCached) {
+        let bottomLoader = grid ? grid.querySelector(".dots-loader") : null;
+        if (!isCached || isRandMode) {
           if (this.explorePage > 1) {
-            bottomLoader = document.createElement("div");
-            bottomLoader.className = "dots-loader";
-            bottomLoader.style.gridColumn = "1 / -1";
-            bottomLoader.style.minHeight = "0";
-            bottomLoader.style.padding = "10px 0 16px";
-            bottomLoader.innerHTML =
-              '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-            grid.appendChild(bottomLoader);
+            if (!bottomLoader) {
+              bottomLoader = document.createElement("div");
+              bottomLoader.className = "dots-loader";
+              bottomLoader.style.gridColumn = "1 / -1";
+              bottomLoader.style.minHeight = "0";
+              bottomLoader.style.padding = "10px 0 16px";
+              bottomLoader.innerHTML =
+                '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+              grid.appendChild(bottomLoader);
+            }
             await new Promise((r) => setTimeout(r, 3000));
             if (currentReqId !== this.exploreReqId) {
-              if (bottomLoader.parentNode) bottomLoader.remove();
+              if (bottomLoader && bottomLoader.parentNode)
+                bottomLoader.remove();
               return;
             }
-          } else if (this.lastActiveAnime) {
+          } else if (this.lastActiveAnime || isRandMode) {
             grid.innerHTML = DOTS_HTML;
             await new Promise((r) => setTimeout(r, 3000));
             if (
@@ -4702,20 +4787,67 @@ Object.assign(app, {
                 this.currentView !== "shows" &&
                 this.currentView !== "series" &&
                 this.currentView !== "explore")
-            )
+            ) {
+              const strayL = grid ? grid.querySelector(".dots-loader") : null;
+              if (strayL) strayL.remove();
               return;
+            }
           }
         }
         this.lastActiveAnime = true;
-        const aniRes = await this.aniApi(gqlQuery, gqlVars);
-        if (bottomLoader && bottomLoader.parentNode) bottomLoader.remove();
-        const lingeringLoader = grid
-          ? grid.querySelector(".dots-loader")
-          : null;
-        if (lingeringLoader && this.explorePage > 1) lingeringLoader.remove();
-        if (currentReqId !== this.exploreReqId) return;
+        let aniRes = await this.aniApi(gqlQuery, gqlVars);
+        if (currentReqId !== this.exploreReqId) {
+          const bL = grid ? grid.querySelector(".dots-loader") : null;
+          if (bL) bL.remove();
+          return;
+        }
+        if (isRandMode && aniReqPage > 1) {
+          const emptyCombined =
+            isAllTypesCombined &&
+            !(
+              aniRes?.data?.pop?.media?.length ||
+              aniRes?.data?.trend?.media?.length ||
+              aniRes?.data?.newest?.media?.length ||
+              aniRes?.data?.airing?.media?.length
+            );
+          const emptySingle =
+            !isAllTypesCombined && !aniRes?.data?.Page?.media?.length;
+          if (emptyCombined || emptySingle) {
+            this.exploreRandomAniPool = (
+              this.exploreRandomAniPool || []
+            ).filter((p) => p < aniReqPage);
+            if (this.explorePage === 1) {
+              const p1Built = this.buildAniExploreVars(
+                fState,
+                type,
+                isYearSortActive,
+                this.yearSortOrder,
+                1,
+                isAllTypesCombined ? subPerPage : perPage,
+              );
+              const p1Vars = p1Built.gqlVars;
+              if (allowedAniIds !== null) p1Vars.id_in = allowedAniIds;
+              if (isAllTypesCombined) {
+                delete p1Vars.sort;
+                delete p1Vars.status_not_in;
+                delete p1Vars.status;
+                p1Vars.newest_lesser = gqlVars.newest_lesser;
+                if (!p1Vars.startDate_greater)
+                  p1Vars.startDate_greater = 19000101;
+              }
+              aniRes = await this.aniApi(gqlQuery, p1Vars);
+              if (currentReqId !== this.exploreReqId) {
+                const bL = grid ? grid.querySelector(".dots-loader") : null;
+                if (bL) bL.remove();
+                return;
+              }
+            }
+          }
+        }
         if (!aniRes || !aniRes.data) {
           if (this.explorePage > 1) {
+            const bL = grid ? grid.querySelector(".dots-loader") : null;
+            if (bL) bL.remove();
             this.explorePage--;
             this.exploreHasMore = true;
             this.exploreLoading = false;
@@ -4741,13 +4873,14 @@ Object.assign(app, {
           ];
           if (!isMovie && includeAiring)
             pageInfos.push(aniRes?.data?.airing?.pageInfo);
-          this.exploreHasMore = pageInfos.some(
-            (pi) => pi?.hasNextPage === true,
-          );
+          this.exploreHasMore = isRandMode
+            ? this.exploreRandomAniPool.length > 0
+            : pageInfos.some((pi) => pi?.hasNextPage === true);
         } else {
           mediaList = aniRes?.data?.Page?.media || [];
-          this.exploreHasMore =
-            aniRes?.data?.Page?.pageInfo?.hasNextPage !== false;
+          this.exploreHasMore = isRandMode
+            ? this.exploreRandomAniPool.length > 0
+            : aniRes?.data?.Page?.pageInfo?.hasNextPage !== false;
         }
         if (seasonIds.length > 0) {
           mediaList = mediaList.filter((m) => {
@@ -4861,130 +4994,260 @@ Object.assign(app, {
         if (countries.length > 1) {
           results = results.filter((i) => countries.includes(i.country));
         }
+        if (isRandMode) {
+          this.shuffleArray(results);
+        }
         if (
           results.length === 0 &&
           this.exploreHasMore &&
-          this.explorePage < 50
+          this.explorePage < 50 &&
+          (!isRandMode || this.exploreRandomAniPool.length > 0)
         ) {
           this.explorePage++;
           this.exploreLoading = false;
           return this.loadExplore();
         }
-      } else if (
-        (this.exploreType === "tv" || this.exploreType === "movie") &&
-        personIds.length > 0
-      ) {
-        const isTv = this.exploreType === "tv";
-        const credEndpoint = isTv ? "tv_credits" : "movie_credits";
-        const creditsArr = await Promise.all(
-          personIds.map((pId) => this.api(`/person/${pId}/${credEndpoint}`)),
-        );
-        const role = this.personRoleFilter;
-        let list = [];
-        creditsArr.forEach((cData) => {
-          if (!cData) return;
-          let castList = cData.cast || [];
-          if (role === "main") {
-            castList = castList.filter((i) =>
-              isTv
-                ? (i.episode_count || 0) >= 10
-                : i.order !== undefined && i.order <= 9,
-            );
-          } else if (role === "other") {
-            castList = castList.filter((i) =>
-              isTv
-                ? (i.episode_count || 0) <= 9
-                : i.order !== undefined && i.order >= 10,
-            );
-          }
-          list.push(...castList);
-          if (!role) {
-            list.push(...(cData.crew || []));
-          }
-        });
-        if (personIds.length > 1) {
-          const idSets = creditsArr.map((cData) => {
-            const s = new Set();
-            (cData?.cast || []).forEach((i) => i?.id && s.add(i.id));
-            (cData?.crew || []).forEach((i) => i?.id && s.add(i.id));
-            return s;
-          });
-          list = list.filter((i) => idSets.every((s) => s.has(i.id)));
-        }
-        const seen = new Set();
-        list = list.filter((i) => {
-          if (
-            !i ||
-            !i.id ||
-            seen.has(i.id) ||
-            this.isBlocked(i, this.exploreType)
-          )
-            return false;
-          seen.add(i.id);
-          return true;
-        });
-        if (normalGenreIds.length > 0) {
-          const gInts = normalGenreIds.map((g) => parseInt(g, 10));
-          list = list.filter(
-            (i) =>
-              gInts.every((gid) => (i.genre_ids || []).includes(gid)) &&
-              !this.isAnimeItem(i),
-          );
-        }
-        const dField = isTv ? "first_air_date" : "release_date";
-        if (years.length > 0) {
-          list = list.filter((i) =>
-            years.some((y) => (i[dField] || "").startsWith(y)),
-          );
-        }
-        if (countries.length > 0 && isTv) {
-          list = list.filter((i) =>
-            (i.origin_country || []).some((ctry) => countries.includes(ctry)),
-          );
-        }
-        if (isYearSortActive) {
-          this.sortMediaByYear(list, this.yearSortOrder || "desc", dField);
-        } else if (type === "top_rated")
-          list.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-        else if (type === "newest")
-          list.sort((a, b) => (b[dField] || "").localeCompare(a[dField] || ""));
-        else list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-        results = list.slice(
-          (this.explorePage - 1) * 20,
-          this.explorePage * 20,
-        );
-      } else if (isYearSortActive && type === "all") {
-        const res = await this.api(`/discover/${this.exploreType}`, {
-          ...baseParams,
-          page: this.explorePage,
-        });
-        if (currentReqId !== this.exploreReqId) return;
-        results = (res && res.results) || [];
-      } else if (type === "all") {
-        const types = [
-          "popular",
-          "trending",
-          "newest",
-          this.exploreType === "movie" ? "revenue" : "airing",
-          "top_rated",
-        ];
-        const queries = types.map((k) =>
-          this.api(
-            `/discover/${this.exploreType}`,
-            this.buildTmdbTypeParams(k, baseParams, this.explorePage),
-          ),
-        );
-        const responses = await Promise.all(queries);
-        if (currentReqId !== this.exploreReqId) return;
-        const lists = responses.map((r) => (r && r.results) || []);
-        results = this.zipInterleave(lists);
       } else {
-        let params = isYearSortActive
-          ? { ...baseParams, page: this.explorePage }
-          : this.buildTmdbTypeParams(type, baseParams, this.explorePage);
-        const data = await this.api(`/discover/${this.exploreType}`, params);
-        if (currentReqId !== this.exploreReqId) return;
-        results = (data && data.results) || [];
+        let normalBottomLoader = null;
+        if (isRandMode) {
+          if (this.explorePage === 1) {
+            grid.innerHTML = DOTS_HTML;
+          } else {
+            const oldL = grid.querySelector(".dots-loader");
+            if (oldL) oldL.remove();
+            normalBottomLoader = document.createElement("div");
+            normalBottomLoader.className = "dots-loader";
+            normalBottomLoader.style.gridColumn = "1 / -1";
+            normalBottomLoader.style.minHeight = "0";
+            normalBottomLoader.style.padding = "10px 0 16px";
+            normalBottomLoader.innerHTML =
+              '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+            grid.appendChild(normalBottomLoader);
+          }
+        }
+        const randBufferPromise = isRandMode
+          ? new Promise((r) => setTimeout(r, 1000))
+          : Promise.resolve();
+        if (
+          (this.exploreType === "tv" || this.exploreType === "movie") &&
+          personIds.length > 0
+        ) {
+          if (
+            isRandMode &&
+            Array.isArray(this.exploreRandomPersonList) &&
+            this.explorePage > 1
+          ) {
+            results = this.exploreRandomPersonList.slice(
+              (this.explorePage - 1) * 20,
+              this.explorePage * 20,
+            );
+          } else {
+            const isTv = this.exploreType === "tv";
+            const credEndpoint = isTv ? "tv_credits" : "movie_credits";
+            const creditsArr = await Promise.all(
+              personIds.map((pId) =>
+                this.api(`/person/${pId}/${credEndpoint}`),
+              ),
+            );
+            if (currentReqId !== this.exploreReqId) {
+              if (normalBottomLoader && normalBottomLoader.parentNode)
+                normalBottomLoader.remove();
+              return;
+            }
+            const role = this.personRoleFilter;
+            let list = [];
+            creditsArr.forEach((cData) => {
+              if (!cData) return;
+              let castList = cData.cast || [];
+              if (role === "main") {
+                castList = castList.filter((i) =>
+                  isTv
+                    ? (i.episode_count || 0) >= 10
+                    : i.order !== undefined && i.order <= 9,
+                );
+              } else if (role === "other") {
+                castList = castList.filter((i) =>
+                  isTv
+                    ? (i.episode_count || 0) <= 9
+                    : i.order !== undefined && i.order >= 10,
+                );
+              }
+              list.push(...castList);
+              if (!role) {
+                list.push(...(cData.crew || []));
+              }
+            });
+            if (personIds.length > 1) {
+              const idSets = creditsArr.map((cData) => {
+                const s = new Set();
+                (cData?.cast || []).forEach((i) => i?.id && s.add(i.id));
+                (cData?.crew || []).forEach((i) => i?.id && s.add(i.id));
+                return s;
+              });
+              list = list.filter((i) => idSets.every((s) => s.has(i.id)));
+            }
+            const seen = new Set();
+            list = list.filter((i) => {
+              if (
+                !i ||
+                !i.id ||
+                seen.has(i.id) ||
+                this.isBlocked(i, this.exploreType)
+              )
+                return false;
+              seen.add(i.id);
+              return true;
+            });
+            if (normalGenreIds.length > 0) {
+              const gInts = normalGenreIds.map((g) => parseInt(g, 10));
+              list = list.filter(
+                (i) =>
+                  gInts.every((gid) => (i.genre_ids || []).includes(gid)) &&
+                  !this.isAnimeItem(i),
+              );
+            }
+            const dField = isTv ? "first_air_date" : "release_date";
+            if (years.length > 0) {
+              list = list.filter((i) =>
+                years.some((y) => (i[dField] || "").startsWith(y)),
+              );
+            }
+            if (countries.length > 0 && isTv) {
+              list = list.filter((i) =>
+                (i.origin_country || []).some((ctry) =>
+                  countries.includes(ctry),
+                ),
+              );
+            }
+            if (isRandMode) {
+              this.shuffleArray(list);
+              this.exploreRandomPersonList = list;
+            } else if (isYearSortActive) {
+              this.sortMediaByYear(list, this.yearSortOrder || "desc", dField);
+            } else if (type === "top_rated")
+              list.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+            else if (type === "newest")
+              list.sort((a, b) =>
+                (b[dField] || "").localeCompare(a[dField] || ""),
+              );
+            else list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+            results = list.slice(
+              (this.explorePage - 1) * 20,
+              this.explorePage * 20,
+            );
+          }
+        } else {
+          let reqPage = this.explorePage;
+          let preFetchedRes = null;
+          if (isRandMode) {
+            if (
+              !Array.isArray(this.exploreRandomPool) ||
+              this.explorePage === 1 ||
+              this.exploreRandomPool.length === 0
+            ) {
+              const probeParams =
+                isYearSortActive && type === "all"
+                  ? { ...baseParams, page: 1 }
+                  : type === "all"
+                    ? this.buildTmdbTypeParams("popular", baseParams, 1)
+                    : isYearSortActive
+                      ? { ...baseParams, page: 1 }
+                      : this.buildTmdbTypeParams(type, baseParams, 1);
+              preFetchedRes = await this.api(
+                `/discover/${this.exploreType}`,
+                probeParams,
+              ).catch(() => null);
+              if (currentReqId !== this.exploreReqId) {
+                if (normalBottomLoader && normalBottomLoader.parentNode)
+                  normalBottomLoader.remove();
+                return;
+              }
+              const maxPg = Math.max(
+                1,
+                Math.min(preFetchedRes?.total_pages || 1, 35),
+              );
+              this.exploreRandomPool = this.shuffleArray(
+                Array.from({ length: maxPg }, (_, idx) => idx + 1),
+              );
+            }
+            reqPage = this.exploreRandomPool.shift() || 1;
+          }
+          if (isYearSortActive && type === "all") {
+            const res =
+              reqPage === 1 && preFetchedRes
+                ? preFetchedRes
+                : await this.api(`/discover/${this.exploreType}`, {
+                    ...baseParams,
+                    page: reqPage,
+                  });
+            if (currentReqId !== this.exploreReqId) {
+              if (normalBottomLoader && normalBottomLoader.parentNode)
+                normalBottomLoader.remove();
+              return;
+            }
+            results = (res && res.results) || [];
+          } else if (type === "all") {
+            const types = [
+              "popular",
+              "trending",
+              "newest",
+              this.exploreType === "movie" ? "revenue" : "airing",
+              "top_rated",
+            ];
+            const queries = types.map((k, kIdx) =>
+              reqPage === 1 && kIdx === 0 && preFetchedRes
+                ? Promise.resolve(preFetchedRes)
+                : this.api(
+                    `/discover/${this.exploreType}`,
+                    this.buildTmdbTypeParams(k, baseParams, reqPage),
+                  ),
+            );
+            const responses = await Promise.all(queries);
+            if (currentReqId !== this.exploreReqId) {
+              if (normalBottomLoader && normalBottomLoader.parentNode)
+                normalBottomLoader.remove();
+              return;
+            }
+            const lists = responses.map((r) => (r && r.results) || []);
+            results = this.zipInterleave(lists);
+          } else {
+            const params = isYearSortActive
+              ? { ...baseParams, page: reqPage }
+              : this.buildTmdbTypeParams(type, baseParams, reqPage);
+            const data =
+              reqPage === 1 && preFetchedRes
+                ? preFetchedRes
+                : await this.api(`/discover/${this.exploreType}`, params);
+            if (currentReqId !== this.exploreReqId) {
+              if (normalBottomLoader && normalBottomLoader.parentNode)
+                normalBottomLoader.remove();
+              return;
+            }
+            results = (data && data.results) || [];
+          }
+          if (isRandMode && this.exploreRandomPool.length === 0) {
+            this.exploreHasMore = false;
+          }
+        }
+        if (isRandMode) {
+          await randBufferPromise;
+          if (
+            currentReqId !== this.exploreReqId ||
+            (this.currentView !== "movies" &&
+              this.currentView !== "shows" &&
+              this.currentView !== "series" &&
+              this.currentView !== "explore")
+          ) {
+            if (normalBottomLoader && normalBottomLoader.parentNode)
+              normalBottomLoader.remove();
+            else {
+              const strayL = grid ? grid.querySelector(".dots-loader") : null;
+              if (strayL) strayL.remove();
+            }
+            return;
+          }
+          this.shuffleArray(results);
+        }
       }
       if (currentReqId !== this.exploreReqId) return;
       if (!hasAnime && normalGenreIds.length > 0)
@@ -5022,6 +5285,7 @@ Object.assign(app, {
           this.exploreSeenIds.add(String(i.id));
           return true;
         });
+        if (isRandMode) this.shuffleArray(unique);
         if (hasAnime && typeof this.enrichAnimeTmdbPosters === "function") {
           this.exploreLoading = true;
           await this.enrichAnimeTmdbPosters(unique);
@@ -5030,10 +5294,14 @@ Object.assign(app, {
         const html = unique
           .map((i) => this.buildCard(i, this.exploreType))
           .join("");
-        if (this.explorePage === 1 || !grid.querySelector(".poster-card"))
-          grid.innerHTML = html;
-        else grid.insertAdjacentHTML("beforeend", html);
+        this.appendExploreGridHtml(
+          grid,
+          html,
+          this.explorePage === 1 || !grid.querySelector(".poster-card"),
+        );
       } else {
+        const bLoader = grid ? grid.querySelector(".dots-loader") : null;
+        if (bLoader) bLoader.remove();
         this.exploreHasMore = false;
         if (this.explorePage === 1 && !grid.querySelector(".poster-card"))
           grid.innerHTML = '<div class="msg-box">Nothing to show.</div>';
@@ -10998,6 +11266,13 @@ Object.assign(app, {
       if (!this.exploreScrollPos) this.exploreScrollPos = {};
       this.exploreScrollPos[this.exploreType || "person"] = this.getScrollY();
       this.returnFromShowinfoToExplore = true;
+    } else if (
+      this.currentView === "showinfo" ||
+      this.currentView === "movies" ||
+      this.currentView === "shows" ||
+      this.currentView === "series"
+    ) {
+      this.resetExploreRandom();
     }
     this.currentPersonId = personId;
     let normDept = (department || "Acting").trim();
@@ -12417,6 +12692,13 @@ Object.assign(app, {
       if (!this.exploreScrollPos) this.exploreScrollPos = {};
       this.exploreScrollPos[this.exploreType || "company"] = this.getScrollY();
       this.returnFromShowinfoToExplore = true;
+    } else if (
+      this.currentView === "showinfo" ||
+      this.currentView === "movies" ||
+      this.currentView === "shows" ||
+      this.currentView === "series"
+    ) {
+      this.resetExploreRandom();
     }
     this.currentSourceId = sourceId;
     this.currentSourceType = sourceType || "company";

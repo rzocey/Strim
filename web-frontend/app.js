@@ -1195,6 +1195,7 @@ var app = {
             if (e && (e.pointerType === "touch" || e.type === "touchstart"))
               return;
             container.classList.add("is-hovered");
+            this.checkScrollArrow(row);
           },
           { passive: true },
         );

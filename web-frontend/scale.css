@@ -809,7 +809,7 @@
 }
 #si-seasons-section {
   padding-top: 14px !important;
-  padding-bottom: 14px !important;
+  padding-bottom: 30px !important;
 }
 .si-cast-section {
   margin-top: 0 !important;
@@ -2253,12 +2253,7 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
 #global-player-container:fullscreen #w-back-btn {
   display: none !important;
 }
-:is(
-  #trailer-modal,
-  .custom-prompt-overlay,
-  #lucky-modal,
-  #media-lightbox-modal
-) {
+:is(#trailer-modal, .custom-prompt-overlay, #media-lightbox-modal) {
   display: none;
   position: fixed;
   top: 0;
@@ -2269,12 +2264,7 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
   justify-content: center;
   align-items: center;
 }
-:is(
-  #trailer-modal,
-  .custom-prompt-overlay,
-  #lucky-modal,
-  #media-lightbox-modal
-).active {
+:is(#trailer-modal, .custom-prompt-overlay, #media-lightbox-modal).active {
   display: flex;
 }
 #trailer-modal {
@@ -2282,7 +2272,7 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
   backdrop-filter: blur(10px);
   z-index: 100000;
 }
-:is(#trailer-modal, #lucky-modal).active {
+#trailer-modal.active {
   animation: fadeIn 0.2s ease;
 }
 .trailer-modal-content {
@@ -2441,7 +2431,7 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
 .custom-prompt-overlay.active > * {
   animation: fadeIn 0.2s ease;
 }
-:is(.custom-prompt-box, .customize-box, .about-box, .lucky-box) {
+:is(.custom-prompt-box, .customize-box, .about-box) {
   box-sizing: border-box;
   max-height: 85vh;
   overscroll-behavior: contain;
@@ -2492,218 +2482,6 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
   background: #f87171;
   color: white;
 }
-#lucky-modal {
-  background: #000000d9;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 100005;
-  padding: 20px;
-}
-.lucky-modal-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 320px;
-}
-.lucky-tooltip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: #1a1a20f2;
-  border: 1px solid #ffffff1f;
-  border-radius: 10px;
-  padding: 10px 14px;
-  width: 100%;
-  box-sizing: border-box;
-  box-shadow: 0 8px 24px #00000099;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: fadeIn 0.25s ease;
-}
-.lucky-tooltip-text {
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: var(--text-muted, #aaa);
-  text-align: center;
-  flex: 1;
-}
-.lucky-tooltip-close {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  transition:
-    color 0.15s ease,
-    background 0.15s ease;
-  flex-shrink: 0;
-}
-.lucky-tooltip-close:hover {
-  color: #fff;
-  background: #ffffff1a;
-}
-@property --lucky-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-@keyframes luckySnakeSpin {
-  0% {
-    --lucky-angle: 0deg;
-  }
-  100% {
-    --lucky-angle: 360deg;
-  }
-}
-.lucky-box {
-  position: relative;
-  background: #000000;
-  border-radius: 14px;
-  padding: 24px 20px 20px;
-  width: 100%;
-  max-width: 310px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 12px 35px #000000e6;
-  transition: box-shadow 0.3s ease;
-}
-.lucky-box::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 16px;
-  padding: 2.5px;
-  background: conic-gradient(
-    from var(--lucky-angle),
-    #000000,
-    #000000,
-    #ffffff,
-    #000000
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  animation: luckySnakeSpin 1.8s linear infinite;
-  pointer-events: none;
-  z-index: 1;
-}
-.lucky-box.winner::before {
-  animation: none;
-  background: #ffffff;
-}
-.lucky-box.winner {
-  box-shadow: 0 12px 35px #000000e6;
-}
-.lucky-close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid #8b8b8b;
-  background: #0f0f0fcc;
-  color: #ffffff;
-  font-size: 1.2rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: 0.2s ease;
-  z-index: 10;
-  padding: 0;
-}
-.lucky-close-btn:hover {
-  background: #f8717133;
-  transform: scale(1.08);
-  border-color: #bababa;
-  color: #dcdcdc;
-}
-.lucky-poster-wrap {
-  width: 180px;
-  background: #111111;
-  border: 2px solid #ffffff33;
-  box-shadow: 0 8px 24px #000000cc;
-  margin-bottom: 12px;
-  transition: 0.3s;
-}
-.lucky-poster-wrap.winner {
-  border: 0.5px solid #ffffff;
-  box-shadow: 0 0 20px #ffffff66;
-  transform: scale(1.03);
-}
-.lucky-poster-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  opacity: 1;
-}
-.lucky-title {
-  font-size: 0.95rem;
-  font-weight: bold;
-  margin-bottom: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  color: #fff;
-}
-.lucky-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 12px;
-  margin-top: 6px;
-  min-height: 42px;
-}
-.lucky-roll-btn,
-.lucky-watch-btn {
-  flex: 1;
-  background: #ffffff;
-  color: #000000;
-  border: 1.5px solid #6f6f6f;
-  box-shadow: none;
-  padding: 9px 18px;
-  border-radius: 5px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: 0.2s;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-sizing: border-box;
-}
-.lucky-roll-btn:hover,
-.lucky-watch-btn:hover {
-  color: #ffffff;
-  background: #ffffff1a;
-  border-color: #8b8b8b;
-}
 .search-filter-bar {
   display: none;
   justify-content: flex-start;
@@ -2740,7 +2518,6 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
 .showinfo-poster.loaded,
 .ep-img.loaded,
 .title-logo.loaded,
-.lucky-poster-img.loaded,
 .block-card-poster img.loaded,
 .si-season-img.loaded {
   opacity: 1;
@@ -2991,9 +2768,14 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
   box-shadow:
     inset 0 0 0 1px #ffffffe6,
     0 0 4px #ffffff80 !important;
-  width: 43px !important;
-  height: 38px !important;
-  border-radius: 20px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 5px 11px !important;
+  border-radius: 9999px !important;
 }
 .nav-col-btn {
   display: none;
@@ -3058,9 +2840,14 @@ body.anti-spoiler-active #si-episodes-section .ep-grid {
   }
   .glass-nav:is(.pos-mid-left, .pos-mid-right):not(.is-minimized)
     .nav-btn.active {
-    width: 36px !important;
-    height: 32px !important;
-    border-radius: 16px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 3px 8px !important;
+    border-radius: 9999px !important;
   }
 }
 .glass-nav.nav-anim:is(.pos-top-left, .pos-top-right) {

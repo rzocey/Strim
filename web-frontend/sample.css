@@ -2,7 +2,7 @@
 .view:not(.active) {
   display: none !important;
 }
-:is(.block-card-poster, .poster-img-container, .lucky-poster-wrap) {
+:is(.block-card-poster, .poster-img-container) {
   position: relative;
   aspect-ratio: 2/3;
   border-radius: 8px;
@@ -288,6 +288,7 @@ body:has(#view-browsing.active)
   transform: scale(0.5) !important;
   pointer-events: none !important;
   overflow: hidden !important;
+  border-width: 0 !important;
   border-color: transparent !important;
   transition:
     max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
@@ -319,6 +320,7 @@ body:has(#view-browsing.active)
   opacity: 1 !important;
   transform: scale(1) !important;
   pointer-events: auto !important;
+  border-width: 1.5px !important;
 }
 .glass-nav:is(.pos-mid-left, .pos-mid-right):not(.is-minimized)
   .nav-switch-btn.active {
@@ -327,9 +329,14 @@ body:has(#view-browsing.active)
   box-shadow:
     inset 0 0 0 1px #ffffffe6,
     0 0 4px #ffffff80 !important;
-  width: 43px !important;
-  height: 38px !important;
-  border-radius: 20px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 5px 11px !important;
+  border-radius: 9999px !important;
 }
 @media (max-height: 540px) and (orientation: landscape) {
   .glass-nav:is(.pos-mid-left, .pos-mid-right):not(.is-minimized)
@@ -372,9 +379,14 @@ body:has(#view-browsing.active)
   }
   .glass-nav:is(.pos-mid-left, .pos-mid-right):not(.is-minimized)
     .nav-switch-btn.active {
-    width: 36px !important;
-    height: 32px !important;
-    border-radius: 16px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 3px 8px !important;
+    border-radius: 9999px !important;
   }
 }
 .title-switch-animating {
@@ -519,7 +531,6 @@ button,
 .showinfo-title,
 .showinfo-title-logo,
 .title-logo,
-.lucky-title,
 .custom-prompt-title,
 .tooltip-title,
 .ep-meta,
@@ -630,6 +641,12 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   justify-content: center;
   line-height: 1;
 }
+.glass-nav .nav-btn:not(#nav-options-btn):not(.nav-col-btn) svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
+}
 @media (hover: hover) and (pointer: fine) {
   .nav-btn:hover {
     color: #ffffff;
@@ -648,6 +665,9 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
     inset 0 0 0 1px #ffffffe6,
     0 0 6px #ffffff80;
 }
+.glass-nav #nav-options-btn {
+  padding: 8px 6px;
+}
 .glass-nav #global-back-btn {
   position: static;
   top: auto;
@@ -657,7 +677,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   color: var(--text-muted);
   cursor: pointer;
   border-radius: 20px;
-  padding: 5px 12px;
+  padding: 5px 6px 5px 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -737,6 +757,9 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
     font-size: 0.85rem;
     border-radius: 18px;
   }
+  .glass-nav #nav-options-btn {
+    padding: 7px 6px;
+  }
   .nav-switch-btn {
     padding: 5px 12px;
     font-size: 0.85rem;
@@ -753,7 +776,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
     border-radius: 18px;
   }
   .glass-nav #global-back-btn {
-    padding: 5px 10px;
+    padding: 5px 5px 5px 9px;
     border-radius: 18px;
   }
   body:has(
@@ -776,7 +799,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
         )
     )
     .glass-nav:not(.pos-mid-left):not(.pos-mid-right)
-    :is(.nav-btn, .nav-switch-explore, #global-back-btn) {
+    :is(.nav-btn:not(#nav-options-btn), .nav-switch-explore) {
     padding: 5px 10px;
   }
   body:has(
@@ -808,6 +831,9 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   .nav-btn {
     padding: 4px 11px;
     font-size: 0.85rem;
+  }
+  .glass-nav #nav-options-btn {
+    padding: 6px 6px;
   }
   .back-btn,
   #global-back-btn {
@@ -841,7 +867,8 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
 }
 #view-search,
 #view-showinfo,
-#si-ep-grid {
+#si-ep-grid,
+#view-explore {
   overflow-anchor: none;
 }
 @keyframes fadeIn {
@@ -1943,6 +1970,28 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
 .btn-explore-search.active {
   border-color: #ffffff !important;
 }
+@keyframes randomBtnGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 6px #ffffff40,
+      inset 0 0 4px #ffffff26;
+  }
+  50% {
+    box-shadow:
+      0 0 14px #ffffffb3,
+      inset 0 0 8px #ffffff4d;
+  }
+}
+.btn-lucky.active {
+  border-color: #ffffff !important;
+  color: #ffffff;
+  animation: randomBtnGlow 1.8s ease-in-out infinite;
+}
+.disable-animations .btn-lucky.active {
+  animation: none;
+  box-shadow: 0 0 8px #ffffff66;
+}
 .explore-entity-search-wrap {
   display: inline-flex;
   align-items: center;
@@ -2071,8 +2120,8 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
 #explore-filter-bar {
   gap: 10px;
 }
-#explore-filter-bar.active-transition #btn-explore-random,
-#explore-filter-bar:not(.minimized) #btn-explore-random,
+#explore-filter-bar.active-transition #btn-explore-random:not(.active),
+#explore-filter-bar:not(.minimized) #btn-explore-random:not(.active),
 #explore-filter-bar.active-transition #btn-explore-anime:not(.active),
 #explore-filter-bar:not(.minimized) #btn-explore-anime:not(.active),
 :is(
@@ -2092,7 +2141,9 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   border: 2px solid #565555;
 }
 #explore-filter-bar.active-transition #btn-explore-anime.active,
-#explore-filter-bar:not(.minimized) #btn-explore-anime.active {
+#explore-filter-bar:not(.minimized) #btn-explore-anime.active,
+#explore-filter-bar.active-transition #btn-explore-random.active,
+#explore-filter-bar:not(.minimized) #btn-explore-random.active {
   background: var(--glass-bg);
   color: #ffffff;
   border: 2px solid #ffffff !important;
