@@ -421,7 +421,7 @@ var app = {
       } catch (e) {}
     }
   },
-  saveWatchProgress(pKey, prog, force = false) {
+  saveWatchProgress(pKey, prog, force = false, dur = 0) {
     if (!pKey || isNaN(prog) || prog <= 10) return;
     if (!this.lastProgressSaved) this.lastProgressSaved = {};
     const last = this.lastProgressSaved[pKey] || 0;
@@ -429,7 +429,29 @@ var app = {
     this.lastProgressSaved[pKey] = prog;
     let wp = this.$storeGet("sh_watch_progress", {});
     if (!wp || typeof wp !== "object" || Array.isArray(wp)) wp = {};
-    this.lruSet(wp, pKey, Math.round(prog), null, 25);
+    const prevEntry = wp[pKey];
+    const prevDur =
+      prevEntry &&
+      typeof prevEntry === "object" &&
+      !isNaN(prevEntry.d) &&
+      prevEntry.d > 0
+        ? Number(prevEntry.d)
+        : 0;
+    let finalDur = !isNaN(dur) && dur > 0 ? Math.round(dur) : prevDur;
+    if (!finalDur && this.watchState && this.watchState.id) {
+      finalDur = this.resolveWatchDuration(
+        this.watchState.id,
+        this.watchState.type,
+        this.watchState.season,
+        this.watchState.episode,
+        this.currentShow,
+      );
+    }
+    const val =
+      finalDur > 0
+        ? { t: Math.round(prog), d: Math.round(finalDur) }
+        : { t: Math.round(prog), d: 0 };
+    this.lruSet(wp, pKey, val, null, 25);
     this.$storeSet("sh_watch_progress", wp);
   },
   removeWatchProgress(pKey) {
@@ -442,11 +464,115 @@ var app = {
       this.$storeSet("sh_watch_progress", wp);
     }
   },
-  getWatchProgress(pKey) {
-    if (!pKey) return 0;
+  getWatchProgressEntry(pKey) {
+    if (!pKey) return null;
     const wp = this.$storeGet("sh_watch_progress", null);
-    if (wp && typeof wp === "object" && wp[pKey] !== undefined) return wp[pKey];
-    return parseFloat(this.$storeGet(pKey, 0) || 0);
+    if (wp && typeof wp === "object" && wp[pKey] !== undefined) {
+      const raw = wp[pKey];
+      if (raw && typeof raw === "object") {
+        const t = parseFloat(raw.t || 0);
+        const d = parseFloat(raw.d || 0);
+        return isNaN(t) ? null : { t, d: isNaN(d) ? 0 : d };
+      }
+      const n = parseFloat(raw || 0);
+      return isNaN(n) ? null : { t: n, d: 0 };
+    }
+    const legacy = parseFloat(this.$storeGet(pKey, 0) || 0);
+    return !isNaN(legacy) && legacy > 0 ? { t: legacy, d: 0 } : null;
+  },
+  getWatchProgress(pKey) {
+    const entry = this.getWatchProgressEntry(pKey);
+    return entry ? entry.t : 0;
+  },
+  resolveWatchDuration(id, type, season = null, episode = null, item = null) {
+    if (!id) return 0;
+    const idStr = String(id);
+    const isTv = type === "tv" || type === "series" || type === "show";
+    let mins = 0;
+    if (isTv) {
+      const sNum = parseInt(season, 10) || 1;
+      const eNum = parseInt(episode, 10) || 1;
+      const epCacheData =
+        this.episodeCache && this.episodeCache[`${idStr}_s${sNum}`];
+      const cachedEp =
+        epCacheData && Array.isArray(epCacheData.episodes)
+          ? epCacheData.episodes.find(
+              (ep) => Number(ep.episode_number) === eNum,
+            )
+          : null;
+      if (cachedEp && cachedEp.runtime > 0) mins = Number(cachedEp.runtime);
+      if (!mins && typeof this.getEpisodeHistory === "function") {
+        const epHist = this.getEpisodeHistory();
+        const group = Array.isArray(epHist)
+          ? epHist.find((g) => String(g.id) === idStr)
+          : null;
+        const histEp =
+          group && Array.isArray(group.episodes)
+            ? group.episodes.find(
+                (ep) => Number(ep.s) === sNum && Number(ep.e) === eNum,
+              )
+            : null;
+        if (histEp && histEp.runtime > 0) mins = Number(histEp.runtime);
+      }
+      if (!mins) {
+        const showObj =
+          this.currentShow && String(this.currentShow.id) === idStr
+            ? this.currentShow
+            : this.getShowDetailsCache
+              ? this.getShowDetailsCache(`tv_${idStr}`)?.data ||
+                this.getShowDetailsCache(idStr)?.data
+              : null;
+        const src = item || showObj;
+        const ert =
+          (src &&
+            Array.isArray(src.episode_run_time) &&
+            src.episode_run_time[0]) ||
+          (showObj &&
+            Array.isArray(showObj.episode_run_time) &&
+            showObj.episode_run_time[0]) ||
+          0;
+        mins = Number(
+          ert ||
+            src?.last_episode_to_air?.runtime ||
+            showObj?.last_episode_to_air?.runtime ||
+            src?.runtime ||
+            showObj?.runtime ||
+            0,
+        );
+      }
+    } else {
+      const showObj =
+        this.currentShow && String(this.currentShow.id) === idStr
+          ? this.currentShow
+          : this.getShowDetailsCache
+            ? this.getShowDetailsCache(`movie_${idStr}`)?.data ||
+              this.getShowDetailsCache(idStr)?.data
+            : null;
+      mins = Number(item?.runtime || showObj?.runtime || 0);
+    }
+    return !isNaN(mins) && mins > 0 ? Math.round(mins * 60) : 0;
+  },
+  getWatchProgressPercent(
+    id,
+    type,
+    season = null,
+    episode = null,
+    item = null,
+  ) {
+    if (!id) return 0;
+    const isTv = type === "tv" || type === "series" || type === "show";
+    const sNum = parseInt(season, 10) || 1;
+    const eNum = parseInt(episode, 10) || 1;
+    const pKey = isTv ? `progress_${id}_s${sNum}_e${eNum}` : `progress_${id}`;
+    const entry = this.getWatchProgressEntry(pKey);
+    if (!entry || entry.t <= 10) return 0;
+    const dur =
+      entry.d > 0
+        ? entry.d
+        : this.resolveWatchDuration(id, type, sNum, eNum, item);
+    if (!dur || dur <= 0) return 0;
+    const pct = Math.round((entry.t / dur) * 100);
+    return Math.max(2, Math.min(98, pct));
   },
   packCacheRaw(obj) {
     if (!obj || typeof obj !== "object") return "{}";
@@ -4972,6 +5098,7 @@ var app = {
               pKey,
               prog,
               ["pause", "paused"].includes(evType),
+              dur,
             );
           }
         }
@@ -5010,7 +5137,12 @@ var app = {
           );
         }
       } else if (typeof data === "object" && data !== null) {
-        let d = data.data;
+        let d =
+          data.data !== undefined && data.data !== null
+            ? data.data
+            : data.event && typeof data.event === "object"
+              ? data.event
+              : null;
         if (typeof d === "string") {
           try {
             d = JSON.parse(d);

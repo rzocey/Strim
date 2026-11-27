@@ -2277,6 +2277,21 @@ body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
   flex: 1 1 0;
   max-width: none;
 }
+#history-grid.cw-wide-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+#history-grid.cw-wide-grid .cw-wide-card {
+  flex: none;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+}
+@media (max-width: 640px) {
+  #history-grid.cw-wide-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .cw-wide-top {
   padding: 10px;
 }
@@ -2351,6 +2366,8 @@ body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
   font-size: clamp(0.82rem, 1.8vw, 0.96rem);
 }
 .cw-wide-play-btn {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   display: flex;
   align-items: center;
@@ -2366,6 +2383,24 @@ body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.15s ease;
+}
+.cw-wide-play-btn > * {
+  position: relative;
+  z-index: 1;
+}
+.cw-wide-play-btn.has-resume-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--resume-pct, 0%);
+  background: #ffffff24;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    width 0.25s ease,
+    background-color 0.15s ease;
 }
 .cw-wide-rm-btn {
   position: absolute;
@@ -2399,6 +2434,9 @@ body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
   .cw-wide-play-btn:hover {
     background: #2e2e2e9d;
   }
+  .cw-wide-play-btn.has-resume-progress:hover::before {
+    background: #ffffff30;
+  }
   .cw-wide-rm-btn:hover {
     background: #ef4444cc;
     color: #ffffff;
@@ -2413,6 +2451,9 @@ body:has(.glass-nav[class*="pos-bottom-"]) #view-source {
 }
 .cw-wide-play-btn.is-touch-hover {
   background: #2e2e2e9d;
+}
+.cw-wide-play-btn.has-resume-progress.is-touch-hover::before {
+  background: #ffffff30;
 }
 .cw-wide-rm-btn.is-touch-hover {
   background: #ef4444cc;

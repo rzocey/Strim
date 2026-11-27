@@ -1036,9 +1036,15 @@ Object.assign(app, {
       ) {
         hybridArg = String(item.last_hybrid_season);
       }
-      const epPrefix = item.is_special
-        ? "E" + watchE
-        : "S" + watchS + " E" + watchE;
+      const dispInfo =
+        typeof this.resolveHistoryDisplayEp === "function"
+          ? this.resolveHistoryDisplayEp(item)
+          : null;
+      const epPrefix = dispInfo
+        ? dispInfo.label
+        : item.is_special
+          ? "E" + watchE
+          : "S" + watchS + " E" + watchE;
       btnLabel = "Resume " + epPrefix;
     }
     let centerHtml = "";
@@ -1073,6 +1079,16 @@ Object.assign(app, {
         ? PAUSE_BTN_SVG(14, 14)
         : PAUSE_BTN_SVG;
     const posterAttr = img ? ' data-bg-src="' + img + '"' : "";
+    const resumePct =
+      typeof this.getWatchProgressPercent === "function"
+        ? this.getWatchProgressPercent(idStr, type, watchS, watchE, item)
+        : 0;
+    const playBtnCls =
+      resumePct > 0
+        ? "cw-wide-play-btn has-resume-progress"
+        : "cw-wide-play-btn";
+    const playBtnStyle =
+      resumePct > 0 ? ' style="--resume-pct:' + resumePct + '%;"' : "";
     return (
       '<div class="cw-wide-card clickable" data-show-id="' +
       idStr +
@@ -1103,7 +1119,11 @@ Object.assign(app, {
       '\')" title="Remove">&times;</button>' +
       "</div>" +
       "</div>" +
-      '<button type="button" class="cw-wide-play-btn" onclick="event.stopPropagation();app.openWatch(\'' +
+      '<button type="button" class="' +
+      playBtnCls +
+      '"' +
+      playBtnStyle +
+      " onclick=\"event.stopPropagation();app.openWatch('" +
       idStr +
       "','" +
       type +
@@ -10446,6 +10466,8 @@ Object.assign(app, {
         if (histEntry) {
           histEntry.last_season = this.watchState.season;
           histEntry.last_episode = this.watchState.episode;
+          histEntry.last_disp_season = dispSeason;
+          histEntry.last_disp_ep = dispEp;
           if (isSpecialWatch) {
             histEntry.last_ep_name = cleanEpName;
             histEntry.is_special = true;

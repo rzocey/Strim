@@ -3780,6 +3780,90 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
       ),
     );
   },
+  resolveHistoryDisplayEp: function (item, showData = null) {
+    if (!item) return { isSpecial: false, season: 1, ep: 1, label: "S1 E1" };
+    const rawS = parseInt(item.last_season, 10) || 1;
+    const rawE = parseInt(item.last_episode, 10) || 1;
+    if (item.is_special || rawS === 0) {
+      return {
+        isSpecial: true,
+        season: rawS,
+        ep: rawE,
+        label: item.last_ep_name || "E" + rawE,
+      };
+    }
+    const idStr = String(item.id || "");
+    const sData =
+      showData ||
+      (this.currentShow && String(this.currentShow.id) === idStr
+        ? this.currentShow
+        : null) ||
+      (this.getShowDetailsCache
+        ? this.getShowDetailsCache("tv_" + idStr)?.data ||
+          this.getShowDetailsCache(idStr)?.data
+        : null);
+    const animeInfo =
+      (this.getShowAnimeInfo ? this.getShowAnimeInfo(idStr) : null) ||
+      (this.animeCache
+        ? this.animeCache[idStr + "_s1"] || this.animeCache[idStr]
+        : null);
+    const seqChain = animeInfo?.sequelChain || null;
+    const tmdbSeasons = (sData?.seasons || []).filter(
+      (s) =>
+        s &&
+        (s.season_number > 0 || (s.season && s.season > 0)) &&
+        (!this.isSeasonAired || this.isSeasonAired(s)),
+    );
+    if (
+      seqChain &&
+      seqChain.length > 1 &&
+      (!sData?.seasons || tmdbSeasons.length <= 1)
+    ) {
+      const res = this.resolveAnimeSequelEp(rawE, seqChain);
+      if (res && res.season && res.ep) {
+        return {
+          isSpecial: false,
+          season: res.season,
+          ep: res.ep,
+          label: "S" + res.season + " E" + res.ep,
+        };
+      }
+    }
+    if (item.last_disp_season && item.last_disp_ep) {
+      return {
+        isSpecial: false,
+        season: item.last_disp_season,
+        ep: item.last_disp_ep,
+        label: "S" + item.last_disp_season + " E" + item.last_disp_ep,
+      };
+    }
+    if (typeof this.getEpisodeHistory === "function") {
+      const epHist = this.getEpisodeHistory();
+      const group = Array.isArray(epHist)
+        ? epHist.find((g) => String(g.id) === idStr)
+        : null;
+      const epHit =
+        group && Array.isArray(group.episodes)
+          ? group.episodes.find(
+              (ep) => Number(ep.s) === rawS && Number(ep.e) === rawE,
+            )
+          : null;
+      if (epHit && epHit.dispS && epHit.dispE) {
+        return {
+          isSpecial: false,
+          season: epHit.dispS,
+          ep: epHit.dispE,
+          label: "S" + epHit.dispS + " E" + epHit.dispE,
+        };
+      }
+    }
+    return {
+      isSpecial: false,
+      season: rawS,
+      ep: rawE,
+      label: "S" + rawS + " E" + rawE,
+    };
+  },
   updateShowinfoPlayBtn: function () {
     const playBtn = this.$g("si-play-btn");
     if (!playBtn || !this.currentShow) return;
@@ -3792,6 +3876,12 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
         String(x.id) === String(id) ||
         (data.id && String(x.id) === String(data.id)),
     );
+    const applyResumeBar = (pct) => {
+      const hasPct = pct > 0;
+      playBtn.classList.toggle("has-resume-progress", hasPct);
+      if (hasPct) playBtn.style.setProperty("--resume-pct", pct + "%");
+      else playBtn.style.removeProperty("--resume-pct");
+    };
     if (type === "movie") {
       const movieInHist =
         showInHist ||
@@ -3800,42 +3890,32 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
             String(x.id) === String(id) ||
             (data && String(x.id) === String(data.id)),
         );
-      playBtn.innerHTML = movieInHist
-        ? `${PAUSE_BTN_SVG(17, 17)} Resume Movie`
-        : `${PLAY_BTN_SVG(17, 17)} Play Movie`;
+      const movieLbl = movieInHist ? "Resume Movie" : "Play Movie";
+      const movieSvg = movieInHist
+        ? PAUSE_BTN_SVG(17, 17)
+        : PLAY_BTN_SVG(17, 17);
+      playBtn.innerHTML = movieSvg + "<span>" + movieLbl + "</span>";
+      const moviePct =
+        movieInHist && typeof this.getWatchProgressPercent === "function"
+          ? this.getWatchProgressPercent(id, "movie", null, null, data)
+          : 0;
+      applyResumeBar(moviePct);
       playBtn.onclick = () => app.openWatch(id, type, 1, 1);
       return;
     }
     if (type === "tv") {
-      const animeInfo =
-        this.getShowAnimeInfo(data.id) ||
-        (this.animeCache
-          ? this.animeCache[`${data.id}_s1`] || this.animeCache[String(data.id)]
-          : null);
-      const seqChain = animeInfo?.sequelChain || null;
-      const validSeasons = (
-        this.currentShowSeasonList ||
-        data.seasons ||
-        []
-      ).filter((s) => s && (s.season_number > 0 || (s.season && s.season > 0)));
-      let cSeasons =
-        seqChain && seqChain.length > 1 && validSeasons.length <= 1
-          ? [...new Set(seqChain.map((s) => s.season || 1))]
-          : null;
-      if (cSeasons) {
-        cSeasons.sort((a, b) => a - b);
-        const tmdbEpTotal =
-          validSeasons[0]?.episode_count || data.number_of_episodes || 0;
-        cSeasons = cSeasons.filter((sNum) => {
-          if (sNum === 1) return true;
-          if (!tmdbEpTotal) return true;
-          for (let ep = 1; ep <= tmdbEpTotal; ep++) {
-            if (this.resolveAnimeSequelEp(ep, seqChain).season === sNum)
-              return true;
-          }
-          return false;
-        });
-      }
+      const rawTmdbSeasons = (data.seasons || []).filter(
+        (s) =>
+          s &&
+          (s.season_number > 0 || (s.season && s.season > 0)) &&
+          (!this.isSeasonAired || this.isSeasonAired(s)),
+      );
+      const validSeasons =
+        rawTmdbSeasons.length > 0
+          ? rawTmdbSeasons
+          : (this.currentShowSeasonList || []).filter(
+              (s) => s && (s.season_number > 0 || (s.season && s.season > 0)),
+            );
       if (
         showInHist &&
         showInHist.last_season !== undefined &&
@@ -3854,6 +3934,7 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
                   s.format === "OVA"),
             )),
         );
+        let resumeLabel = "";
         if (isSpecial) {
           const epName =
             showInHist.last_ep_name ||
@@ -3862,17 +3943,25 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
             ]?.episodes?.find(
               (e) => e.episode_number === showInHist.last_episode,
             )?.name ||
-            `E${showInHist.last_episode}`;
-          playBtn.innerHTML = `${PAUSE_BTN_SVG(17, 17)} Resume ${epName}`;
-        } else if (cSeasons && cSeasons.length > 1) {
-          const res = this.resolveAnimeSequelEp(
-            showInHist.last_episode,
-            seqChain,
-          );
-          playBtn.innerHTML = `${PAUSE_BTN_SVG(17, 17)} Resume S${res.season} E${res.ep}`;
+            "E" + showInHist.last_episode;
+          resumeLabel = "Resume " + epName;
         } else {
-          playBtn.innerHTML = `${PAUSE_BTN_SVG(17, 17)} Resume S${showInHist.last_season} E${showInHist.last_episode}`;
+          const dispInfo = this.resolveHistoryDisplayEp(showInHist, data);
+          resumeLabel = "Resume " + dispInfo.label;
         }
+        playBtn.innerHTML =
+          PAUSE_BTN_SVG(17, 17) + "<span>" + resumeLabel + "</span>";
+        const tvPct =
+          typeof this.getWatchProgressPercent === "function"
+            ? this.getWatchProgressPercent(
+                id,
+                "tv",
+                showInHist.last_season,
+                showInHist.last_episode,
+                data,
+              )
+            : 0;
+        applyResumeBar(tvPct);
         playBtn.onclick = () => {
           const anchorY =
             typeof this.getSeasonAnchorY === "function"
@@ -3894,7 +3983,8 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
           );
         };
       } else {
-        playBtn.innerHTML = `${PLAY_BTN_SVG(17, 17)} Play`;
+        playBtn.innerHTML = PLAY_BTN_SVG(17, 17) + "<span>Play</span>";
+        applyResumeBar(0);
         playBtn.onclick = () => {
           const firstSeason =
             validSeasons[0]?.season_number ||

@@ -306,6 +306,8 @@ Object.assign(app, {
       this.applyShowinfoBackdropPref(val);
     } else if (key === "cwWideCard") {
       this.updateContinueWatching();
+      if (this.currentView === "history" && this.historySub !== "episodes")
+        this.loadHistoryView("watch");
     } else if (key === "titleLogo" || key === "similarShowcase") {
       if (this.currentView === "showinfo" && this.currentShow) {
         this.openShowinfo(
@@ -1861,6 +1863,29 @@ Object.assign(app, {
       }
     }
     const hist = this.getHistoryStore(type);
+    if (!isBrowsing) {
+      const useWide = !this.uiPrefs || this.uiPrefs.cwWideCard !== false;
+      const grid = this.$g("history-grid");
+      const btn = this.$g("clear-history-btn");
+      if (useWide && hist.length > 0 && grid) {
+        grid.classList.add("cw-wide-grid");
+        if (btn) btn.style.display = "inline-flex";
+        grid.innerHTML = hist
+          .map((i) => this.buildContinueWideCard(i))
+          .join("");
+        this.markImgsLoaded(grid.querySelectorAll("img"));
+        grid.querySelectorAll(".cw-wide-card[data-show-id]").forEach((card) => {
+          const sId = card.getAttribute("data-show-id");
+          const sTitle = card.getAttribute("data-show-title") || "";
+          const sType = card.getAttribute("onclick")?.includes("'tv'")
+            ? "tv"
+            : "movie";
+          this.hydrateContinueWideImg(card, sId, sType, sTitle);
+        });
+        return;
+      }
+      if (grid) grid.classList.remove("cw-wide-grid");
+    }
     this.renderGridList(
       isBrowsing ? "browsing-grid" : "history-grid",
       isBrowsing ? "clear-browsing-btn" : "clear-history-btn",

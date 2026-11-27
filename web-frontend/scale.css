@@ -155,21 +155,47 @@
   flex-shrink: 0;
 }
 #si-play-btn {
+  position: relative;
+  overflow: hidden;
   background: #22222253 !important;
   backdrop-filter: blur(6px) !important;
   -webkit-backdrop-filter: blur(6px) !important;
   color: #ffffff !important;
   border: solid 1.5px #ffffff1a !important;
 }
+#si-play-btn > * {
+  position: relative;
+  z-index: 1;
+}
+#si-play-btn.has-resume-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--resume-pct, 0%);
+  background: #ffffff29;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    width 0.25s ease,
+    background-color 0.15s ease;
+}
 @media (hover: hover) and (pointer: fine) {
   #si-play-btn:hover {
     transform: scale(1.05);
     border: solid 1.3px !important;
   }
+  #si-play-btn.has-resume-progress:hover::before {
+    background: #ffffff36;
+  }
 }
 #si-play-btn.is-touch-hover {
   transform: scale(1.05);
   border: solid 1.3px !important;
+}
+#si-play-btn.has-resume-progress.is-touch-hover::before {
+  background: #ffffff36;
 }
 #si-trailer-btn {
   --path1: #ffffff;
