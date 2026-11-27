@@ -2303,10 +2303,25 @@ Object.assign(app, {
       rating: epRatingVal,
       desc: epObj?.overview || "",
     });
-    if (group.episodes.length > 10)
-      group.episodes = group.episodes.slice(0, 10);
     epHist.unshift(group);
-    if (epHist.length > 35) epHist = epHist.slice(0, 35);
+    let totalEps = epHist.reduce(
+      (sum, g) => sum + (g.episodes ? g.episodes.length : 0),
+      0,
+    );
+    while (totalEps > 500 && epHist.length > 0) {
+      const oldestGroup = epHist[epHist.length - 1];
+      if (
+        !oldestGroup ||
+        !oldestGroup.episodes ||
+        oldestGroup.episodes.length === 0
+      ) {
+        epHist.pop();
+        continue;
+      }
+      oldestGroup.episodes.pop();
+      totalEps--;
+      if (oldestGroup.episodes.length === 0) epHist.pop();
+    }
     this.setEpisodeHistory(epHist);
   },
   saveBrowsingHistory: function (item) {

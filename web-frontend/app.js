@@ -421,14 +421,25 @@ var app = {
       } catch (e) {}
     }
   },
+  getWatchProgressStore() {
+    if (
+      !this._watchProgCache ||
+      typeof this._watchProgCache !== "object" ||
+      Array.isArray(this._watchProgCache)
+    ) {
+      const raw = this.$storeGet("sh_watch_progress", {});
+      this._watchProgCache =
+        raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    }
+    return this._watchProgCache;
+  },
   saveWatchProgress(pKey, prog, force = false, dur = 0) {
     if (!pKey || isNaN(prog) || prog <= 10) return;
     if (!this.lastProgressSaved) this.lastProgressSaved = {};
     const last = this.lastProgressSaved[pKey] || 0;
     if (!force && Math.abs(prog - last) < 5) return;
     this.lastProgressSaved[pKey] = prog;
-    let wp = this.$storeGet("sh_watch_progress", {});
-    if (!wp || typeof wp !== "object" || Array.isArray(wp)) wp = {};
+    const wp = this.getWatchProgressStore();
     const prevEntry = wp[pKey];
     const prevDur =
       prevEntry &&
@@ -451,23 +462,23 @@ var app = {
       finalDur > 0
         ? { t: Math.round(prog), d: Math.round(finalDur) }
         : { t: Math.round(prog), d: 0 };
-    this.lruSet(wp, pKey, val, null, 25);
+    this.lruSet(wp, pKey, val, null, 500);
     this.$storeSet("sh_watch_progress", wp);
   },
   removeWatchProgress(pKey) {
     if (!pKey) return;
     if (this.lastProgressSaved) delete this.lastProgressSaved[pKey];
     this.$storeRemove(pKey);
-    let wp = this.$storeGet("sh_watch_progress", null);
-    if (wp && typeof wp === "object" && wp[pKey] !== undefined) {
+    const wp = this.getWatchProgressStore();
+    if (wp[pKey] !== undefined) {
       delete wp[pKey];
       this.$storeSet("sh_watch_progress", wp);
     }
   },
   getWatchProgressEntry(pKey) {
     if (!pKey) return null;
-    const wp = this.$storeGet("sh_watch_progress", null);
-    if (wp && typeof wp === "object" && wp[pKey] !== undefined) {
+    const wp = this.getWatchProgressStore();
+    if (wp[pKey] !== undefined) {
       const raw = wp[pKey];
       if (raw && typeof raw === "object") {
         const t = parseFloat(raw.t || 0);
