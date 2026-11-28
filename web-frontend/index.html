@@ -108,14 +108,6 @@
       ></button>
       <button
         type="button"
-        id="history-switch-episodes"
-        class="nav-switch-btn nav-switch-history"
-        title="Episodes"
-        data-icon="switch-episodes"
-        onclick="app.switchHistorySub('episodes')"
-      ></button>
-      <button
-        type="button"
         id="history-switch-browsing"
         class="nav-switch-btn nav-switch-history"
         title="Browsing History"
@@ -529,6 +521,28 @@
                     &times;
                   </button>
                 </div>
+                <div
+                  id="bookmark-io-actions"
+                  class="list-io-actions"
+                  style="display: none"
+                >
+                  <button
+                    type="button"
+                    id="btn-bookmark-import"
+                    class="btn-primary btn-list-io"
+                    data-icon="upload"
+                    onclick="app.triggerListImport('bookmark')"
+                    title="Import Bookmark"
+                  ></button>
+                  <button
+                    type="button"
+                    id="btn-bookmark-export"
+                    class="btn-primary btn-list-io"
+                    data-icon="download"
+                    onclick="app.exportBookmarkList()"
+                    title="Export Bookmark"
+                  ></button>
+                </div>
               </div>
               <button
                 id="clear-mylist-btn"
@@ -608,12 +622,37 @@
                   &times;
                 </button>
               </div>
+              <div id="custom-list-io-actions" class="list-io-actions">
+                <button
+                  type="button"
+                  id="btn-custom-import"
+                  class="btn-primary btn-list-io"
+                  data-icon="upload"
+                  onclick="app.triggerListImport('custom')"
+                  title="Import Lists"
+                ></button>
+                <button
+                  type="button"
+                  id="btn-custom-export"
+                  class="btn-primary btn-list-io"
+                  data-icon="download"
+                  onclick="app.openCustomExportModal()"
+                  title="Export Lists"
+                ></button>
+              </div>
             </div>
             <div class="mylist-custom-grid" id="mylist-custom-grid"></div>
           </div>
           <div id="mylist-catalog-wrap" style="display: none">
             <div class="grid-container" id="mylist-grid"></div>
           </div>
+          <input
+            type="file"
+            id="list-json-file-input"
+            accept=".json,application/json"
+            style="display: none"
+            onchange="app.handleListFileSelected(this)"
+          />
         </div>
       </div>
       <div id="view-markedaswatched" class="view">
@@ -653,7 +692,9 @@
           <div class="section-header view-header-row">
             <div class="view-header-col">
               <div class="explore-header-titles">
-                <h2 class="view-title" id="history-view-title">Titles</h2>
+                <h2 class="view-title" id="history-view-title">
+                  Watch History
+                </h2>
               </div>
               <button
                 id="clear-history-btn"
@@ -662,17 +703,8 @@
                 title="Clear History"
               ></button>
             </div>
-            <button
-              type="button"
-              class="btn-seasons-view-toggle"
-              id="history-ep-view-toggle"
-              onclick="app.toggleHistoryEpViewMode()"
-              title="Toggle View"
-              style="display: none"
-            ></button>
           </div>
           <div class="grid-container" id="history-grid"></div>
-          <div id="history-episodes-list" style="display: none"></div>
         </div>
       </div>
       <div id="view-browsing" class="view">

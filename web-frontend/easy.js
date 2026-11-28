@@ -10,7 +10,7 @@ const svgBase = (p, w = 24, h = w, attrs = "", vb = "0 0 24 24") =>
   ">" +
   p +
   "</svg>";
-const svgStroke = (p, w = 24, h = w, sw = 2, extra = "") => {
+const svgStroke = (p, w = 24, h = w, sw = 2, extra = "", vb = "0 0 24 24") => {
   const ex = extra ? " " + extra : "";
   return svgBase(
     p,
@@ -20,6 +20,7 @@ const svgStroke = (p, w = 24, h = w, sw = 2, extra = "") => {
       sw +
       '" stroke-linecap="round" stroke-linejoin="round"' +
       ex,
+    vb,
   );
 };
 const svgFill = (p, w = 24, h = w, extra = "") => {
@@ -79,13 +80,6 @@ const GRID_VIEW_SVG = svgBoxBtn(
 );
 const LIST_VIEW_SVG = svgBoxBtn(
   '<rect width="13" height="3" x="5.5" y="5.5" rx="1" fill="currentColor" stroke="none"/><rect width="13" height="3" x="5.5" y="10.5" rx="1" fill="currentColor" stroke="none"/><rect width="13" height="3" x="5.5" y="15.5" rx="1" fill="currentColor" stroke="none"/>',
-  24,
-  24,
-  2,
-  "",
-);
-const MIN_VIEW_SVG = svgBoxBtn(
-  '<rect width="13" height="3" x="5.5" y="10.5" rx="1" fill="currentColor" stroke="none"/>',
   24,
   24,
   2,
@@ -246,6 +240,22 @@ const ARROW_RIGHT_SVG = svgBoxBtn(
   2,
   "",
 );
+const SCROLL_ARROW_LEFT_SVG = svgStroke(
+  '<path d="m16 2-9 10 9 10"/>',
+  11,
+  24,
+  2,
+  "",
+  "6 0 11 24",
+);
+const SCROLL_ARROW_RIGHT_SVG = svgStroke(
+  '<path d="m8 2 9 10-9 10"/>',
+  11,
+  24,
+  2,
+  "",
+  "7 0 11 24",
+);
 const CAST_PLACEHOLDER_SVG =
   '<div class="si-cast-placeholder">' +
   svgBoxBtn(
@@ -261,12 +271,23 @@ const SWITCH_TITLES_SVG = svgStroke(
   18,
   18,
 );
-const SWITCH_EPISODES_SVG = W_MENU_SVG(18);
 const SWITCH_BROWSING_SVG = svgStroke(
   '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
   18,
   18,
 );
+const UPLOAD_SVG = (w = 18, h = w) =>
+  svgStroke(
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+    w,
+    h,
+  );
+const DOWNLOAD_SVG = (w = 18, h = w) =>
+  svgStroke(
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+    w,
+    h,
+  );
 const OPTIONS_ITEMS_DATA = [
   [
     "history",
@@ -323,11 +344,9 @@ const STATIC_ICONS = {
     '<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 5.93h14.14M4.93 18.07h14.14"/>',
     22,
   ),
-  mylist: svgFill(
-    '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  mylist: svgStroke(
+    '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M5 6h8"/><path d="M7 20v-5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v5"/>',
     22,
-    22,
-    'style="flex-shrink:0;"',
   ),
   search: svgStroke(
     '<circle cx="10.5" cy="10.5" r="7.5"/><path d="m21 21-5.2-5.2"/>',
@@ -336,7 +355,7 @@ const STATIC_ICONS = {
     2.4,
   ),
   options: svgBase(
-    '<rect width="16" height="2.5" x="4" y="3.75" rx="1"/><rect width="3.5" height="7" x="6" y="1.5" rx="1"/><rect width="16" height="2.5" x="4" y="13.75" rx="1"/><rect width="3.5" height="7" x="14" y="11.5" rx="1"/><rect width="16" height="2.5" x="4" y="23.75" rx="1"/><rect width="3.5" height="7" x="9" y="21.5" rx="1"/>',
+    '<rect width="16" height="2.5" x="4" y="3.75" rx="1" /><rect width="16" height="2.5" x="4" y="13.75" rx="1" /><rect width="16" height="2.5" x="4" y="23.75" rx="1" />',
     18,
     22,
     ' fill="currentColor" stroke="none"',
@@ -377,7 +396,7 @@ const STATIC_ICONS = {
     18,
     2.5,
   ),
-  "star-hub": STAR_SVG(28, 28, "#378EF0"),
+  "star-hub": STAR_SVG(28, 28),
   trailer: YT_SVG(20, 20),
   watched: EYE_SVG(20, 20, true),
   "arrow-left": ARROW_LEFT_SVG,
@@ -392,8 +411,9 @@ const STATIC_ICONS = {
   "switch-movie": MOVIE_CARD_SVG(18),
   "switch-company": svgStroke(COMPANY_PATH, 18, 20),
   "switch-person": PICTURE_SVG,
-  "switch-episodes": SWITCH_EPISODES_SVG,
   "switch-browsing": SWITCH_BROWSING_SVG,
+  upload: UPLOAD_SVG(16, 16),
+  download: DOWNLOAD_SVG(16, 16),
   "plus-si": PLUS_SVG(15),
   "person-bio-placeholder": svgStroke(
     '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -424,7 +444,6 @@ if (typeof window !== "undefined") {
   window.TRASH_SVG = TRASH_SVG;
   window.GRID_VIEW_SVG = GRID_VIEW_SVG;
   window.LIST_VIEW_SVG = LIST_VIEW_SVG;
-  window.MIN_VIEW_SVG = MIN_VIEW_SVG;
   window.PICTURE_SVG = PICTURE_SVG;
   window.COMPANY_SVG = COMPANY_SVG;
   window.EYE_SVG = EYE_SVG;
@@ -457,9 +476,12 @@ if (typeof window !== "undefined") {
   window.W_FS_SVG = W_FS_SVG;
   window.ARROW_LEFT_SVG = ARROW_LEFT_SVG;
   window.ARROW_RIGHT_SVG = ARROW_RIGHT_SVG;
+  window.SCROLL_ARROW_LEFT_SVG = SCROLL_ARROW_LEFT_SVG;
+  window.SCROLL_ARROW_RIGHT_SVG = SCROLL_ARROW_RIGHT_SVG;
   window.CAST_PLACEHOLDER_SVG = CAST_PLACEHOLDER_SVG;
   window.SWITCH_TITLES_SVG = SWITCH_TITLES_SVG;
-  window.SWITCH_EPISODES_SVG = SWITCH_EPISODES_SVG;
+  window.UPLOAD_SVG = UPLOAD_SVG;
+  window.DOWNLOAD_SVG = DOWNLOAD_SVG;
   window.OPTIONS_ITEMS_DATA = OPTIONS_ITEMS_DATA;
   window.STATIC_ICONS = STATIC_ICONS;
 }

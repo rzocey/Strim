@@ -87,8 +87,7 @@ var app = {
       : OApi;
   },
   async fetchOmdb(queryStr) {
-    const key = this.getOmdbKey();
-    if (!key || this.omdbPrimaryExhausted) return null;
+    const apiKey = this.getOmdbKey();
     const fetchWithTimeout = async (url) => {
       let tId = null;
       const ctrl =
@@ -108,25 +107,27 @@ var app = {
         if (tId) clearTimeout(tId);
       }
     };
-    try {
-      const res = await fetchWithTimeout(
-        `https://www.omdbapi.com/?${queryStr}&apikey=${key}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data && /limit/i.test(data.Error || "")) {
+    if (!this.omdbPrimaryExhausted) {
+      try {
+        const res = await fetchWithTimeout(
+          `https://www.omdbapi.com/?${queryStr}&apikey=${apiKey}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data && /limit/i.test(data.Error || "")) {
+            this.omdbPrimaryExhausted = true;
+          } else {
+            return data;
+          }
+        } else if (
+          res.status === 401 ||
+          res.status === 403 ||
+          res.status === 429
+        ) {
           this.omdbPrimaryExhausted = true;
-        } else {
-          return data;
         }
-      } else if (
-        res.status === 401 ||
-        res.status === 403 ||
-        res.status === 429
-      ) {
-        this.omdbPrimaryExhausted = true;
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
     return null;
   },
   getItemYear(item) {
@@ -512,19 +513,6 @@ var app = {
             )
           : null;
       if (cachedEp && cachedEp.runtime > 0) mins = Number(cachedEp.runtime);
-      if (!mins && typeof this.getEpisodeHistory === "function") {
-        const epHist = this.getEpisodeHistory();
-        const group = Array.isArray(epHist)
-          ? epHist.find((g) => String(g.id) === idStr)
-          : null;
-        const histEp =
-          group && Array.isArray(group.episodes)
-            ? group.episodes.find(
-                (ep) => Number(ep.s) === sNum && Number(ep.e) === eNum,
-              )
-            : null;
-        if (histEp && histEp.runtime > 0) mins = Number(histEp.runtime);
-      }
       if (!mins) {
         const showObj =
           this.currentShow && String(this.currentShow.id) === idStr
@@ -1202,13 +1190,9 @@ var app = {
         this.logoCache[cacheKey] = "NONE";
         return Promise.resolve(null);
       }
-      const fKey = this.getFanartKey();
-      if (!fKey) {
-        this.logoCache[cacheKey] = "NONE";
-        return Promise.resolve(null);
-      }
-      const fUrl = `https://webservice.fanart.tv/v3/${isMovie ? "movies" : "tv"}/${targetId}?api_key=${fKey}`;
-      return fetch(fUrl)
+      return fetch(
+        `https://webservice.fanart.tv/v3/${isMovie ? "movies" : "tv"}/${targetId}?api_key=${this.getFanartKey()}`,
+      )
         .then((r) => r.json())
         .then((f) => {
           const url = isMovie
@@ -1292,8 +1276,8 @@ var app = {
     });
   },
   setupScrollRowArrows() {
-    const lSvg = ARROW_LEFT_SVG;
-    const rSvg = ARROW_RIGHT_SVG;
+    const lSvg = SCROLL_ARROW_LEFT_SVG;
+    const rSvg = SCROLL_ARROW_RIGHT_SVG;
     document.querySelectorAll(".row-nav-arrows").forEach((el) => el.remove());
     document.querySelectorAll(".scroll-row").forEach((row) => {
       const container = row.closest(".scroll-row-container");
@@ -2220,7 +2204,7 @@ var app = {
       if (el) el.classList.remove("is-touch-hover");
     };
     const selector =
-      'button, a, [role="button"], .scroll-arrow, .explore-card, .mylist-hub-card, .custom-list-card, .view-all, .btn-icon, .btn-primary, .ep-card, .ep-page-btn, .history-group-delete-btn, .history-ep-delete-btn, .custom-list-del-btn, .rating-hint-btn, #si-more-similar-btn, .nav-btn, .tab-btn, .si-action-btn, .si-media-arrow, .sheet-item, .search-recent-item, .recent-del-btn, .hero-dot, .btn-filter-toggle, .btn-anime, .btn-lucky, #filter-type-clear, .btn-new-list, .btn-rename-list, .btn-new-list-action, .popover-header, .popover-row, .storage-action-btn, .history-ep-group-title, .bookmark-btn, .remove-btn, .si-cast-card, .si-cast-toggle-title, .section-nav-title, .si-season-card, .si-media-card, .catalog-type-filter-btn, [data-touch-hover], .clickable';
+      'button, a, [role="button"], .scroll-arrow, .explore-card, .mylist-hub-card, .custom-list-card, .view-all, .btn-icon, .btn-primary, .ep-card, .ep-page-btn, .custom-list-del-btn, .rating-hint-btn, #si-more-similar-btn, .nav-btn, .tab-btn, .si-action-btn, .si-media-arrow, .sheet-item, .search-recent-item, .recent-del-btn, .hero-dot, .btn-filter-toggle, .btn-anime, .btn-lucky, #filter-type-clear, .btn-new-list, .btn-rename-list, .btn-new-list-action, .popover-header, .popover-row, .storage-action-btn, .list-io-row, .list-io-select-all, .bookmark-btn, .remove-btn, .si-cast-card, .si-cast-toggle-title, .section-nav-title, .si-season-card, .si-media-card, .catalog-type-filter-btn, [data-touch-hover], .clickable';
     document.addEventListener(
       "touchstart",
       (e) => {
@@ -2653,12 +2637,11 @@ var app = {
       }
     }
     return this._runInFlight("apiInFlight", cacheKey, async () => {
-      const u = new URL(`${BASE_URL}${endpoint}`);
-      const activeKey = keyOverride || this.getTmdbKey();
-      if (activeKey) u.searchParams.append("api_key", activeKey);
-      for (let k in params) u.searchParams.append(k, params[k]);
+      const url = new URL(`${BASE_URL}${endpoint}`);
+      url.searchParams.append("api_key", keyOverride || this.getTmdbKey());
+      for (let k in params) url.searchParams.append(k, params[k]);
       try {
-        const res = await fetch(u);
+        const res = await fetch(url);
         if (!res.ok) throw new Error("API req failed");
         const data = await res.json();
         if (
@@ -5084,6 +5067,11 @@ var app = {
         return;
       if (!data) return;
       let triggerNext = false;
+      const isTvWatch = Boolean(
+        this.watchState.type === "tv" ||
+        this.watchState.type === "series" ||
+        this.watchState.type === "show",
+      );
       const isEmbedMaster = Boolean(
         (data && data.source === "embedmaster_player") ||
         (event.origin &&
@@ -5164,32 +5152,81 @@ var app = {
           );
         }
       } else if (data.type === "MEDIA_DATA" && data.data) {
-        let list = Array.isArray(data.data) ? data.data : [data.data];
-        let cur = list.find((m) => String(m.id) === String(this.watchState.id));
+        let rawMd = data.data;
+        if (typeof rawMd === "string") {
+          try {
+            rawMd = JSON.parse(rawMd);
+          } catch (e) {}
+        }
+        const curIdStr = String(this.watchState.id);
+        let cur = null;
+        if (Array.isArray(rawMd)) {
+          cur = rawMd.find((m) => m && String(m.id) === curIdStr) || null;
+        } else if (rawMd && typeof rawMd === "object") {
+          if (rawMd.id !== undefined && String(rawMd.id) === curIdStr) {
+            cur = rawMd;
+          } else {
+            cur =
+              rawMd[curIdStr] ||
+              rawMd["t" + curIdStr] ||
+              rawMd["tv-" + curIdStr] ||
+              rawMd["m" + curIdStr] ||
+              rawMd["movie-" + curIdStr] ||
+              Object.values(rawMd).find(
+                (m) => m && typeof m === "object" && String(m.id) === curIdStr,
+              ) ||
+              null;
+          }
+        }
         if (cur) {
-          let isTv = cur.type
+          const isTv = cur.type
             ? cur.type === "tv" || cur.type === "series" || cur.type === "show"
-            : this.watchState.type === "tv" ||
-              this.watchState.type === "series" ||
-              this.watchState.type === "show";
-          let s = this.watchState.season,
-            e = this.watchState.episode;
-          const sp = (isTv ? cur.show_progress?.[`s${s}e${e}`] : cur)?.progress;
-          handleProg(
-            s,
-            e,
-            parseFloat(sp?.watched || cur.progress?.watched || "0"),
-            parseFloat(sp?.duration || cur.progress?.duration || "0"),
-            "",
+            : isTvWatch;
+          const s = this.watchState.season;
+          const e = this.watchState.episode;
+          const sp = (
+            isTv && cur.show_progress
+              ? cur.show_progress["s" + s + "e" + e]
+              : cur
+          )?.progress;
+          const mdProg = parseFloat(
+            sp?.watched ?? cur.progress?.watched ?? "0",
           );
+          const mdDur = parseFloat(
+            sp?.duration ?? cur.progress?.duration ?? "0",
+          );
+          const mdNearEnd =
+            !isNaN(mdDur) &&
+            mdDur > 0 &&
+            !isNaN(mdProg) &&
+            mdDur - mdProg <= 15;
+          const mdNow = Date.now();
+          if (mdNearEnd || mdNow - (this._lastMediaDataTick || 0) >= 1000) {
+            this._lastMediaDataTick = mdNow;
+            handleProg(s, e, mdProg, mdDur, "");
+          }
         }
       } else if (typeof data === "object" && data !== null) {
+        const outerType = String(data.type || "").toLowerCase();
+        const outerEv = String(data.event || "").toLowerCase();
+        if (
+          outerType === "next_episode_available" ||
+          outerType === "cinelite_request_addons" ||
+          outerType === "player_title" ||
+          outerEv === "status" ||
+          outerType === "vidrift:ui-hidden" ||
+          outerType === "vidrift:ui-visible" ||
+          outerType === "vidrift:providers"
+        )
+          return;
         let d =
           data.data !== undefined && data.data !== null
             ? data.data
-            : data.event && typeof data.event === "object"
-              ? data.event
-              : null;
+            : data.payload && typeof data.payload === "object"
+              ? data.payload
+              : data.event && typeof data.event === "object"
+                ? data.event
+                : null;
         if (typeof d === "string") {
           try {
             d = JSON.parse(d);
@@ -5197,9 +5234,8 @@ var app = {
         }
         if (!d || typeof d !== "object") d = data;
         const pInfo = d.player_info || {};
-        const isPlayerEvent =
-          String(data.type || "").toUpperCase() === "PLAYER_EVENT";
-        const rawEv =
+        const isPlayerEvent = outerType === "player_event";
+        let rawEv =
           d.event && d !== data
             ? d.event
             : d.event ||
@@ -5209,13 +5245,17 @@ var app = {
               data.action ||
               d.player_status ||
               "";
-        const evType = rawEv.toString().toLowerCase();
+        let evType = rawEv.toString().toLowerCase();
+        if (d.completed === true) evType = "completed";
+        if (evType === "episodes-open") return;
         let rawProg =
           d.currentTime ??
           d.player_progress ??
           d.time ??
+          d.timestamp ??
           d.position ??
           d.current ??
+          d.watched ??
           d.progress?.watched ??
           data.currentTime ??
           data.time;
@@ -5235,8 +5275,145 @@ var app = {
           prog /= 1000;
           dur /= 1000;
         }
-        const s = d.season || pInfo.season || this.watchState.season;
-        const e = d.episode || pInfo.episode || this.watchState.episode;
+        const durKey =
+          String(this.watchState.id) +
+          "_" +
+          String(this.watchState.season) +
+          "_" +
+          String(this.watchState.episode);
+        if (this.watchState._lastDurKey !== durKey) {
+          this.watchState._lastDurKey = durKey;
+          this.watchState._lastDur = 0;
+        }
+        if (dur > 0) {
+          this.watchState._lastDur = dur;
+        } else if (this.watchState._lastDur > 0) {
+          dur = this.watchState._lastDur;
+        }
+        const rawS =
+          d.season ??
+          d.seasonNumber ??
+          d.season_number ??
+          pInfo.season ??
+          data.season;
+        const rawE =
+          d.episode ??
+          d.episodeNumber ??
+          d.episode_number ??
+          pInfo.episode ??
+          data.episode;
+        const repS =
+          rawS === "" || rawS === null || rawS === undefined
+            ? NaN
+            : parseInt(rawS, 10);
+        const repE =
+          rawE === "" || rawE === null || rawE === undefined
+            ? NaN
+            : parseInt(rawE, 10);
+        const msgId =
+          d.tmdbId ??
+          d.mediaId ??
+          d.media_id ??
+          d.tmdb_id ??
+          d.id ??
+          data.tmdbId ??
+          data.mediaId;
+        const msgIdStr =
+          msgId !== undefined && msgId !== null && msgId !== ""
+            ? String(msgId)
+            : "";
+        const curIdStr = String(this.watchState.id);
+        const rawCurId = curIdStr.replace(/^ani_/, "");
+        const idMatches =
+          !msgIdStr ||
+          msgIdStr === curIdStr ||
+          msgIdStr === rawCurId ||
+          Boolean(
+            this.watchState.aniId && msgIdStr === String(this.watchState.aniId),
+          ) ||
+          Boolean(
+            this.watchState.malId && msgIdStr === String(this.watchState.malId),
+          );
+        const isSwitchEv =
+          outerType === "cinesrc:nextepisode" ||
+          outerType === "vidrift:episode" ||
+          outerType.endsWith(":episode") ||
+          outerType.endsWith(":nextepisode") ||
+          evType === "cinesrc:nextepisode" ||
+          evType === "vidrift:episode" ||
+          evType === "episode_change";
+        const isActivePlayEv =
+          isSwitchEv ||
+          evType === "play" ||
+          outerType === "vidrift:unpaused" ||
+          (([
+            "timeupdate",
+            "seek",
+            "seeked",
+            "pause",
+            "video_progress",
+            "cinelite_playback_progress",
+            "vidly_player_event",
+            "sync_history",
+          ].includes(evType) ||
+            [
+              "video_progress",
+              "cinelite_playback_progress",
+              "vidly_player_event",
+              "sync_history",
+            ].includes(outerType) ||
+            outerType.endsWith(":progress") ||
+            evType.endsWith(":progress")) &&
+            prog > 0);
+        const isAnimeMsg = Boolean(
+          this.watchState.isAnime ||
+          String(
+            d.mediaType || d.media_type || data.mediaType || "",
+          ).toLowerCase() === "anime",
+        );
+        let effS = !isNaN(repS) && repS >= 1 ? repS : NaN;
+        let effE = !isNaN(repE) && repE >= 1 ? repE : NaN;
+        let aniEpArg = null;
+        if (isAnimeMsg && isNaN(effS) && !isNaN(effE)) {
+          effS = parseInt(this.watchState.season, 10) || 1;
+          aniEpArg = effE;
+          if (
+            this.watchState.animeEp &&
+            this.watchState.episode &&
+            Number(this.watchState.animeEp) !== Number(this.watchState.episode)
+          ) {
+            effE = Math.max(
+              1,
+              effE -
+                parseInt(this.watchState.animeEp, 10) +
+                parseInt(this.watchState.episode, 10),
+            );
+          }
+        }
+        if (
+          isTvWatch &&
+          idMatches &&
+          !isNaN(effS) &&
+          effS >= 1 &&
+          !isNaN(effE) &&
+          effE >= 1 &&
+          (effS !== parseInt(this.watchState.season, 10) ||
+            effE !== parseInt(this.watchState.episode, 10)) &&
+          isActivePlayEv &&
+          Date.now() - (this._lastWatchOpenTime || 0) >= 1500 &&
+          typeof this.syncWatchEpisodeFromIframe === "function"
+        ) {
+          this.syncWatchEpisodeFromIframe(effS, effE, aniEpArg);
+        }
+        if (isSwitchEv && (isNaN(prog) || prog <= 0)) return;
+        const s =
+          !isNaN(effS) && effS >= 1 && idMatches
+            ? effS
+            : this.watchState.season;
+        const e =
+          !isNaN(effE) && effE >= 1 && idMatches
+            ? effE
+            : this.watchState.episode;
         handleProg(s, e, prog, dur, evType);
       } else if (typeof data === "string") {
         const msg = data.toLowerCase();
@@ -5247,11 +5424,6 @@ var app = {
         )
           triggerNext = true;
       }
-      const isTvWatch = Boolean(
-        this.watchState.type === "tv" ||
-        this.watchState.type === "series" ||
-        this.watchState.type === "show",
-      );
       if (triggerNext && isTvWatch && this.watchState.epCount > 0) {
         const now = Date.now();
         if (now - (this.lastAutoNextTime || 0) < 5000) {

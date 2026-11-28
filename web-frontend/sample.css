@@ -912,7 +912,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   );
   background-size: 200% 100%;
   animation: heroSwipe 2.8s linear infinite;
-  border: 1px solid #ffffff33;
+  border: solid 1.5px #ffffff1a;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -1557,14 +1557,26 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   left: 0;
   justify-content: flex-start;
   padding-left: 4px;
-  background: linear-gradient(to right, #00000087 40%, transparent 90%);
+  background: linear-gradient(
+    to right,
+    #000000bf 0%,
+    #0000008c 32%,
+    #00000040 68%,
+    #00000000 100%
+  );
   border-radius: 8px 0 0 8px;
 }
 .scroll-arrow.right {
   right: 0;
   justify-content: flex-end;
   padding-right: 4px;
-  background: linear-gradient(to left, #00000087 40%, transparent 90%);
+  background: linear-gradient(
+    to left,
+    #000000bf 0%,
+    #0000008c 32%,
+    #00000040 68%,
+    #00000000 100%
+  );
   border-radius: 0 8px 8px 0;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1584,8 +1596,8 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   }
 }
 .scroll-arrow svg {
-  width: 16px;
-  height: 16px;
+  width: 11px;
+  height: 24px;
   display: block;
   flex-shrink: 0;
   transition: transform 0.18s ease;
@@ -1692,7 +1704,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   top: 5px;
   right: 5px;
   background: #0d0d0d21;
-  border: 1px solid var(--glass-border);
+  border: solid 1px #ffffff1a;
   color: #ffffff;
   width: 28px;
   height: 28px;
@@ -1755,7 +1767,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   bottom: 5px;
   right: 5px;
   background: #2b2b2b21;
-  border: 1px solid var(--glass-border);
+  border: solid 1px #ffffff1a;
   color: #4ade80;
   width: 26px;
   height: 26px;
@@ -1773,7 +1785,7 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   top: 5px;
   left: 5px;
   background: #2b2b2b21;
-  border: 1px solid var(--glass-border);
+  border: solid 1px #ffffff1a;
   color: white;
   width: 28px;
   height: 28px;
@@ -1973,24 +1985,20 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
 @keyframes randomBtnGlow {
   0%,
   100% {
-    box-shadow:
-      0 0 6px #ffffff40,
-      inset 0 0 4px #ffffff26;
+    border-color: #ffffff33;
   }
   50% {
-    box-shadow:
-      0 0 14px #ffffffb3,
-      inset 0 0 8px #ffffff4d;
+    border-color: #ffffff;
   }
 }
 .btn-lucky.active {
-  border-color: #ffffff !important;
+  border-color: #ffffff;
   color: #ffffff;
-  animation: randomBtnGlow 1.8s ease-in-out infinite;
+  animation: randomBtnGlow 2s ease-in-out infinite;
 }
 .disable-animations .btn-lucky.active {
   animation: none;
-  box-shadow: 0 0 8px #ffffff66;
+  border-color: #ffffff;
 }
 .explore-entity-search-wrap {
   display: inline-flex;
@@ -2141,12 +2149,15 @@ body:has(#view-home.active:not(.loaded)) .glass-nav {
   border: 2px solid #565555;
 }
 #explore-filter-bar.active-transition #btn-explore-anime.active,
-#explore-filter-bar:not(.minimized) #btn-explore-anime.active,
+#explore-filter-bar:not(.minimized) #btn-explore-anime.active {
+  background: var(--glass-bg);
+  color: #ffffff;
+  border: 2px solid #ffffff !important;
+}
 #explore-filter-bar.active-transition #btn-explore-random.active,
 #explore-filter-bar:not(.minimized) #btn-explore-random.active {
   background: var(--glass-bg);
   color: #ffffff;
-  border: 2px solid #ffffff !important;
 }
 .filter-minimized-info .filter-clear-all-btn {
   display: inline-flex !important;

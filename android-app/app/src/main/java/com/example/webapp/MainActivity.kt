@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as GColor
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -37,6 +38,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
@@ -84,6 +86,42 @@ class MainActivity : AppCompatActivity() {
     private var currentDurationSec: Double = 0.0
     private var currentPositionSec: Double = 0.0
     private var currentIsPlaying: Boolean = false
+    private var pendingExportJson: String? = null
+
+    private val exportJsonLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+        val payload = pendingExportJson
+        pendingExportJson = null
+        if (uri == null || payload == null) return@registerForActivityResult
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                contentResolver.openOutputStream(uri)?.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                runOnUiThread {
+                    webView.evaluateJavascript("if (window.__androidExportResult) { window.__androidExportResult(true, 'List exported.'); }", null)
+                }
+            } catch (_: Exception) {
+                runOnUiThread {
+                    webView.evaluateJavascript("if (window.__androidExportResult) { window.__androidExportResult(false, 'Failed to export file.'); }", null)
+                }
+            }
+        }
+    }
+
+    private val importJsonLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val content = contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+                val escaped = org.json.JSONObject.quote(content)
+                runOnUiThread {
+                    webView.evaluateJavascript("if (window.__androidImportResult) { window.__androidImportResult($escaped); }", null)
+                }
+            } catch (_: Exception) {
+                runOnUiThread {
+                    webView.evaluateJavascript("if (window.__androidExportResult) { window.__androidExportResult(false, 'Failed to read JSON file.'); }", null)
+                }
+            }
+        }
+    }
 
     private val notificationHandler = Handler(Looper.getMainLooper())
     private val cancelNotificationRunnable = Runnable {
@@ -289,6 +327,21 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun getStorageStatsJson(): String {
             return activity.getStorageStatsJson()
+        }
+
+        @JavascriptInterface
+        fun exportJsonFile(filename: String, jsonContent: String) {
+            activity.runOnUiThread {
+                activity.pendingExportJson = jsonContent
+                activity.exportJsonLauncher.launch(filename)
+            }
+        }
+
+        @JavascriptInterface
+        fun importJsonFile() {
+            activity.runOnUiThread {
+                activity.importJsonLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+            }
         }
 
     }

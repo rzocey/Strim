@@ -4,7 +4,6 @@ Object.assign(app, {
   myList: {},
   customLists: [],
   myListSub: "hub",
-  historySub: "titles",
   activeCustomListId: null,
   activePopoverShowId: null,
   watchedList: {},
@@ -306,8 +305,7 @@ Object.assign(app, {
       this.applyShowinfoBackdropPref(val);
     } else if (key === "cwWideCard") {
       this.updateContinueWatching();
-      if (this.currentView === "history" && this.historySub !== "episodes")
-        this.loadHistoryView("watch");
+      if (this.currentView === "history") this.loadHistoryView("watch");
     } else if (key === "titleLogo" || key === "similarShowcase") {
       if (this.currentView === "showinfo" && this.currentShow) {
         this.openShowinfo(
@@ -875,13 +873,11 @@ Object.assign(app, {
     this.customLists = Array.isArray(clParsed) ? clParsed : [];
     [
       ["watchedList", "sh_watched_list", {}],
-      ["epHistory", "sh_ep_history", []],
       ["blocklist", "sh_blocklist", []],
       ["catBlocklist", "sh_cat_blocklist", []],
       ["showSeasons", "showSeasons", {}],
       ["showEpPages", "showEpPages", {}],
       ["explorePrefs", "explorePrefs", { movie: {}, tv: {} }],
-      ["collapsedHistoryShows", "collapsedHistoryShows", {}],
     ].forEach(([prop, key, def]) => {
       this[prop] = this.$storeGet(key, def);
     });
@@ -890,7 +886,6 @@ Object.assign(app, {
       this.$storeGet("seasonViewMode", null) ||
       (this.$storeGet("antiSpoiler", false) ? "list" : "grid");
     this.antiSpoiler = this.seasonViewMode === "list";
-    this.epHistoryViewMode = this.$storeGet("epHistoryViewMode", "grid");
     this.applySeasonViewMode();
     this.loadUiPrefs();
     let prefType = this.$storeGet("preferredType", "embed") || "embed";
@@ -974,6 +969,7 @@ Object.assign(app, {
         ["about-modal", () => this.toggleAppModal("about", false, null, true)],
         ["person-ep-modal", () => this.closePersonEpisodesModal(null, true)],
         ["ep-cast-modal", () => this.closeEpisodeCastModal(null, true)],
+        ["list-io-modal", () => this.closeListIoModal(null, true)],
         ["options-sheet-overlay", () => this.closeOptionsSheet(null, true)],
       ];
       for (const [id, closeFn] of activeModals) {
@@ -992,7 +988,6 @@ Object.assign(app, {
           (this.currentShow &&
             (this.currentShow.media_type || this.currentShow.type)) ||
           "tv";
-        this.watchFromEpHistory = false;
         this.blockWatchOnBack = true;
         const isTv = Boolean(
           showType === "tv" ||
@@ -1106,7 +1101,6 @@ Object.assign(app, {
           );
         } else if (e.state.view === "history") {
           this.navigate("history", false);
-          this.openHistorySub(e.state.sub || "titles", false);
         } else if (e.state.view === "person") {
           this.openPerson(e.state.id, false, false, e.state.dept || "Acting");
         } else if (e.state.view === "source") {
@@ -1364,9 +1358,7 @@ Object.assign(app, {
       return;
     }
     if (view === "history") {
-      const sub = params.get("sub") || "titles";
       this.navigate("history", true, true);
-      this.openHistorySub(sub, false);
       return;
     }
     this.navigate(view, true, true);
@@ -1591,12 +1583,7 @@ Object.assign(app, {
       }
       if (pushState && !this.similarSearch) this.$g("search-input")?.focus();
     } else if (viewId === "history" || viewId === "browsing") {
-      if (viewId === "history") {
-        if (pushState) this.historySub = "titles";
-        this.openHistorySub(this.historySub || "titles", false);
-      } else {
-        this.loadHistoryView("browsing");
-      }
+      this.loadHistoryView(viewId === "browsing" ? "browsing" : "watch");
     }
   },
   toggleClearBtn: function (inpId, btnId) {
@@ -1651,6 +1638,11 @@ Object.assign(app, {
     const epcm = this.$g("ep-cast-modal");
     if (epcm && epcm.classList.contains("active")) {
       this.closeEpisodeCastModal();
+      return;
+    }
+    const liom = this.$g("list-io-modal");
+    if (liom && liom.classList.contains("active")) {
+      this.closeListIoModal(null, false);
       return;
     }
     const info = this.$g("si-infobox");
@@ -1746,11 +1738,7 @@ Object.assign(app, {
         m: "Clear entire Watch History?",
         fn: () => {
           app.setHistory([]);
-          app.setEpisodeHistory([]);
-          app.collapsedHistoryShows = {};
-          app.$storeSet("collapsedHistoryShows", app.collapsedHistoryShows);
-          if (app.historySub === "episodes") app.renderEpisodeHistory();
-          else app.loadHistoryView("watch");
+          app.loadHistoryView("watch");
         },
       },
       browsing: {
@@ -1845,25 +1833,20 @@ Object.assign(app, {
   },
   loadHistoryView: function (type) {
     const isBrowsing = type === "browsing";
-    if (isBrowsing) {
-      const tBtn = this.$g("history-switch-titles");
-      const eBtn = this.$g("history-switch-episodes");
-      const bBtn = this.$g("history-switch-browsing");
-      if (tBtn) {
-        tBtn.innerHTML = SWITCH_TITLES_SVG;
-        tBtn.classList.remove("active");
-      }
-      if (eBtn) {
-        eBtn.innerHTML = SWITCH_EPISODES_SVG;
-        eBtn.classList.remove("active");
-      }
-      if (bBtn) {
-        bBtn.innerHTML = SWITCH_BROWSING_SVG;
-        bBtn.classList.add("active");
-      }
+    const tBtn = this.$g("history-switch-titles");
+    const bBtn = this.$g("history-switch-browsing");
+    if (tBtn) {
+      tBtn.innerHTML = SWITCH_TITLES_SVG;
+      tBtn.classList.toggle("active", !isBrowsing);
+    }
+    if (bBtn) {
+      bBtn.innerHTML = SWITCH_BROWSING_SVG;
+      bBtn.classList.toggle("active", isBrowsing);
     }
     const hist = this.getHistoryStore(type);
     if (!isBrowsing) {
+      const titleEl = this.$g("history-view-title");
+      if (titleEl) titleEl.innerText = "Watch History";
       const useWide = !this.uiPrefs || this.uiPrefs.cwWideCard !== false;
       const grid = this.$g("history-grid");
       const btn = this.$g("clear-history-btn");
@@ -1882,6 +1865,7 @@ Object.assign(app, {
             : "movie";
           this.hydrateContinueWideImg(card, sId, sType, sTitle);
         });
+        this.hidePageReloadOverlay();
         return;
       }
       if (grid) grid.classList.remove("cw-wide-grid");
@@ -1893,6 +1877,7 @@ Object.assign(app, {
       `${isBrowsing ? "Browsing" : "Watch"} history is empty.`,
       isBrowsing ? "browsing" : true,
     );
+    this.hidePageReloadOverlay();
   },
   removeFromHistoryStore: function (type, id) {
     const isBrowsing = type === "browsing";
@@ -1900,18 +1885,8 @@ Object.assign(app, {
     const removedItem = oldList.find((x) => String(x.id) === String(id));
     let list = oldList.filter((x) => String(x.id) !== String(id));
     this.setHistoryStore(type, list);
-    if (!isBrowsing) {
-      let epHist = this.getEpisodeHistory().filter(
-        (g) => String(g.id) !== String(id),
-      );
-      this.setEpisodeHistory(epHist);
-      if (this.currentView === "history" && this.historySub === "episodes") {
-        this.renderEpisodeHistory();
-      }
-    }
     if (this.currentView === (isBrowsing ? "browsing" : "history")) {
-      if (isBrowsing || this.historySub === "titles")
-        this.loadHistoryView(type);
+      this.loadHistoryView(type);
     } else if (!isBrowsing && this.currentView === "home")
       this.updateContinueWatching();
     const title = removedItem ? removedItem.title || removedItem.name : "";
@@ -1927,19 +1902,10 @@ Object.assign(app, {
   removeFromBrowsingHistory: function (id) {
     this.removeFromHistoryStore("browsing", id);
   },
-  getEpisodeHistory: function () {
-    return this.$storeGet("sh_ep_history", []);
-  },
-  setEpisodeHistory: function (h) {
-    this.$storeSet("sh_ep_history", h);
-  },
   switchHistorySub: function (nextSub = null) {
-    const curTab =
-      this.currentView === "browsing"
-        ? "browsing"
-        : this.historySub || "titles";
+    const curTab = this.currentView === "browsing" ? "browsing" : "titles";
     const targetSub =
-      nextSub || (curTab === "episodes" ? "titles" : "episodes");
+      nextSub || (curTab === "browsing" ? "titles" : "browsing");
     if (targetSub === curTab) return;
     const sEl = this.$g("history-switch-" + targetSub);
     if (sEl) sEl.blur();
@@ -1948,16 +1914,11 @@ Object.assign(app, {
         ? document.querySelector("#view-browsing .view-title")
         : this.$g("history-view-title");
     this.switchHeaderAnimation(tEl, sEl, () => {
-      if (targetSub === "browsing") {
-        this.navigate("browsing", false, true);
-      } else {
-        if (this.currentView === "browsing") {
-          this.setActiveView("history", null);
-          this.currentView = "history";
-          this.updateBackBtn("history");
-        }
-        this.openHistorySub(targetSub, false);
-      }
+      this.navigate(
+        targetSub === "browsing" ? "browsing" : "history",
+        false,
+        true,
+      );
     });
   },
   switchMyListSub: function () {
@@ -1989,340 +1950,6 @@ Object.assign(app, {
       targetEl,
       this.$g("mylist-watched-btn"),
     );
-  },
-  openHistorySub: function (sub = "titles", pushState = true) {
-    this.historySub = sub;
-    const isEp = sub === "episodes";
-    const titleEl = this.$g("history-view-title");
-    const switchEl = this.$g("history-switch-title");
-    const titlesGrid = this.$g("history-grid");
-    const epList = this.$g("history-episodes-list");
-    const clearBtn = this.$g("clear-history-btn");
-    const toggleBtn = this.$g("history-ep-view-toggle");
-    if (toggleBtn && !isEp) {
-      toggleBtn.style.display = "none";
-    }
-    if (titleEl) titleEl.innerText = isEp ? "Episode History" : "Watch History";
-    const tBtn = this.$g("history-switch-titles");
-    const eBtn = this.$g("history-switch-episodes");
-    if (tBtn) {
-      tBtn.innerHTML = SWITCH_TITLES_SVG;
-      tBtn.classList.toggle("active", !isEp);
-    }
-    if (eBtn) {
-      eBtn.innerHTML = SWITCH_EPISODES_SVG;
-      eBtn.classList.toggle("active", isEp);
-    }
-    const bBtn = this.$g("history-switch-browsing");
-    if (bBtn) {
-      bBtn.innerHTML = SWITCH_BROWSING_SVG;
-      bBtn.classList.remove("active");
-    }
-    if (isEp) {
-      if (titlesGrid) titlesGrid.style.display = "none";
-      if (epList) epList.style.display = "block";
-      this.applySeasonViewMode();
-      this.renderEpisodeHistory();
-    } else {
-      if (epList) epList.style.display = "none";
-      if (titlesGrid) titlesGrid.style.display = "grid";
-      this.loadHistoryView("watch");
-    }
-    const pageTitle = isEp ? "Episode History" : "Watch History";
-    const url = isEp ? "?view=history&sub=episodes" : "?view=history";
-    this.syncHistoryUrl({ view: "history", sub }, pageTitle, url, false, true);
-    this.hidePageReloadOverlay();
-  },
-  renderEpisodeHistory: function () {
-    const container = this.$g("history-episodes-list");
-    const clearBtn = this.$g("clear-history-btn");
-    const toggleBtn = this.$g("history-ep-view-toggle");
-    if (!container) return;
-    container.classList.toggle(
-      "list-view",
-      this.epHistoryViewMode === "list" || this.epHistoryViewMode === "min",
-    );
-    const epHist = this.getEpisodeHistory();
-    const hasEps = Boolean(
-      epHist && epHist.some((g) => g.episodes && g.episodes.length > 0),
-    );
-    if (!hasEps) {
-      container.innerHTML =
-        '<div class="msg-box">Episode history is empty.</div>';
-      if (clearBtn) clearBtn.style.display = "none";
-      if (toggleBtn) toggleBtn.style.display = "none";
-      return;
-    }
-    if (clearBtn) clearBtn.style.display = "inline-flex";
-    if (toggleBtn) toggleBtn.style.display = "inline-flex";
-    let html = "";
-    epHist.forEach((group) => {
-      if (!group.episodes || group.episodes.length === 0) return;
-      const isCollapsed = Boolean(
-        this.collapsedHistoryShows &&
-        this.collapsedHistoryShows[String(group.id)],
-      );
-      const showTitle = group.title || "Show";
-      const epsHtml = group.episodes
-        .map((ep) => {
-          const hybridArg =
-            ep.hybridSeason !== null && ep.hybridSeason !== undefined
-              ? ep.hybridSeason
-              : "null";
-          const cleanImg = ep.img || "";
-          const safeTitle = (ep.title || "").replace(/"/g, "&quot;");
-          const epText = ep.title || "";
-          return (
-            '<div class="ep-card" onclick="app.watchFromEpHistory=true;app.openWatch(\'' +
-            group.id +
-            "','tv'," +
-            ep.s +
-            "," +
-            ep.e +
-            ",true,false," +
-            hybridArg +
-            ')">' +
-            '<button type="button" class="history-ep-delete-btn" onclick="event.stopPropagation();app.removeEpisodeFromHistory(\'' +
-            group.id +
-            "'," +
-            ep.s +
-            "," +
-            ep.e +
-            ')" title="Remove Episode">&times;</button>' +
-            '<div class="ep-thumb-wrap"><img src="' +
-            cleanImg +
-            '" class="ep-img" loading="lazy" onerror="this.style.opacity=\'0\'"></div>' +
-            '<div class="ep-info"><div class="ep-title" title="' +
-            safeTitle +
-            '">' +
-            epText +
-            "</div></div>" +
-            "</div>"
-          );
-        })
-        .join("");
-      html += `<div class="history-ep-group${isCollapsed ? " is-collapsed" : ""}" data-show-id="${group.id}"><div class="history-ep-group-header"><div class="history-ep-group-title" onclick="app.toggleShowGroupCollapse('${group.id}')" title="Click to ${isCollapsed ? "expand" : "collapse"}">${showTitle}</div><button type="button" class="history-group-delete-btn" onclick="event.stopPropagation();app.removeShowGroupFromEpisodeHistory('${group.id}')" title="Remove Show from History">&times;</button></div><div class="scroll-row-container"><div class="scroll-row history-ep-row" onscroll="app.checkScrollArrow(this)">${epsHtml}</div></div></div>`;
-    });
-    container.innerHTML = html;
-    this.setupScrollRowArrows();
-    this.updateArrows();
-    this.markImgsLoaded(container.querySelectorAll(".ep-img"));
-  },
-  toggleHistoryEpViewMode: function () {
-    const epHist = this.getEpisodeHistory();
-    if (!epHist || epHist.length === 0) return;
-    const prevMode = this.epHistoryViewMode || "grid";
-    const next = { grid: "list", list: "min", min: "grid" }[prevMode] || "grid";
-    this.epHistoryViewMode = next;
-    this.collapsedHistoryShows =
-      next === "min"
-        ? Object.fromEntries(epHist.map((g) => [String(g.id), true]))
-        : {};
-    this.$storeSet("epHistoryViewMode", next);
-    this.$storeSet("collapsedHistoryShows", this.collapsedHistoryShows);
-    const container = this.$g("history-episodes-list");
-    const isNextList = next === "list" || next === "min";
-    const isPrevList = prevMode === "list" || prevMode === "min";
-    const applyFn = () => {
-      this.applySeasonViewMode();
-      if (container) {
-        container.classList.toggle("list-view", isNextList);
-        container.querySelectorAll(".history-ep-group").forEach((groupEl) => {
-          groupEl.classList.toggle("is-collapsed", next === "min");
-          const titleEl = groupEl.querySelector(".history-ep-group-title");
-          if (titleEl) {
-            titleEl.title = `Click to ${next === "min" ? "expand" : "collapse"}`;
-          }
-        });
-      }
-    };
-    const revertFn = () => {
-      this.applySeasonViewMode();
-      if (container) {
-        container.classList.toggle("list-view", isPrevList);
-        container.querySelectorAll(".history-ep-group").forEach((groupEl) => {
-          groupEl.classList.toggle("is-collapsed", prevMode === "min");
-          const titleEl = groupEl.querySelector(".history-ep-group-title");
-          if (titleEl) {
-            titleEl.title = `Click to ${prevMode === "min" ? "expand" : "collapse"}`;
-          }
-        });
-      }
-    };
-    this.animateHeight(container, applyFn, revertFn);
-  },
-  toggleShowGroupCollapse: function (showId) {
-    if (!this.collapsedHistoryShows) this.collapsedHistoryShows = {};
-    const sId = String(showId);
-    const isNowCollapsed = !this.collapsedHistoryShows[sId];
-    if (isNowCollapsed) {
-      this.collapsedHistoryShows[sId] = true;
-    } else {
-      delete this.collapsedHistoryShows[sId];
-    }
-    this.$storeSet("collapsedHistoryShows", this.collapsedHistoryShows);
-    const groupEl = document.querySelector(
-      `.history-ep-group[data-show-id="${sId}"]`,
-    );
-    if (groupEl) {
-      const titleEl = groupEl.querySelector(".history-ep-group-title");
-      if (titleEl) {
-        titleEl.title = `Click to ${isNowCollapsed ? "expand" : "collapse"}`;
-      }
-      const applyFn = () => {
-        groupEl.classList.toggle("is-collapsed", isNowCollapsed);
-      };
-      const revertFn = () => {
-        groupEl.classList.toggle("is-collapsed", !isNowCollapsed);
-      };
-      this.animateHeight(groupEl, applyFn, revertFn);
-    }
-    this.updateArrows();
-  },
-  removeEpisodeFromHistory: function (showId, season, episode) {
-    let epHist = this.getEpisodeHistory();
-    const group = epHist.find((g) => String(g.id) === String(showId));
-    if (!group) return;
-    const removedEp = group.episodes.find(
-      (e) => Number(e.s) === Number(season) && Number(e.e) === Number(episode),
-    );
-    group.episodes = group.episodes.filter(
-      (e) =>
-        !(Number(e.s) === Number(season) && Number(e.e) === Number(episode)),
-    );
-    if (group.episodes.length === 0) {
-      return this.removeShowGroupFromEpisodeHistory(showId);
-    }
-    const epTitle = removedEp ? removedEp.title : `Episode ${episode}`;
-    this.setEpisodeHistory(epHist);
-    this.showToast(
-      `<span class="toast-title">${group.title} (${epTitle})</span> removed from Watch History`,
-    );
-    this.renderEpisodeHistory();
-  },
-  removeShowGroupFromEpisodeHistory: function (showId) {
-    let epHist = this.getEpisodeHistory();
-    const group = epHist.find((g) => String(g.id) === String(showId));
-    const showTitle = group ? group.title : "Show";
-    if (
-      this.collapsedHistoryShows &&
-      this.collapsedHistoryShows[String(showId)]
-    ) {
-      delete this.collapsedHistoryShows[String(showId)];
-      this.$storeSet("collapsedHistoryShows", this.collapsedHistoryShows);
-    }
-    epHist = epHist.filter((g) => String(g.id) !== String(showId));
-    this.setEpisodeHistory(epHist);
-    let mainHist = this.getHistory().filter(
-      (x) => String(x.id) !== String(showId),
-    );
-    this.setHistory(mainHist);
-    if (this.currentView === "home") this.updateContinueWatching();
-    this.showToast(
-      `<span class="toast-title">${showTitle}</span> removed from Watch History`,
-    );
-    this.renderEpisodeHistory();
-  },
-  saveEpisodeHistory: function (
-    showItem,
-    season,
-    episode,
-    epObj,
-    activeSpecialEp,
-    isSpecialWatch,
-    epName,
-    hybridSeason,
-    dispSeason,
-    dispEp,
-  ) {
-    if (!showItem || !showItem.id) return;
-    const id = String(showItem.id);
-    const title = showItem.title || showItem.name || "Show";
-    const fallbackImg = showItem.poster_path
-      ? this.getImg(showItem.poster_path, "poster")
-      : "";
-    let img = epObj?.still_path
-      ? this.getImg(epObj.still_path, "still")
-      : activeSpecialEp?.still_path
-        ? activeSpecialEp.still_path.startsWith("http")
-          ? activeSpecialEp.still_path
-          : this.getImg(activeSpecialEp.still_path, "still")
-        : fallbackImg;
-    let date = "";
-    if (epObj?.air_date) {
-      const dObj = new Date(epObj.air_date);
-      if (!isNaN(dObj.getTime())) {
-        const day = dObj.getUTCDate();
-        const month = dObj.toLocaleString("en-US", {
-          month: "short",
-          timeZone: "UTC",
-        });
-        const year = dObj.getUTCFullYear();
-        date = `${day} ${month} ${year}`;
-      }
-    }
-    const epRatingVal =
-      epObj?.vote_average > 0 ? epObj.vote_average.toFixed(1) : null;
-    const epPrefix = isSpecialWatch
-      ? `E${dispEp}`
-      : `S${dispSeason} E${dispEp}`;
-    const nameText = epName || epObj?.name || `Episode ${dispEp}`;
-    const cardTitle = isSpecialWatch ? nameText : `${epPrefix} - ${nameText}`;
-    let epHist = this.getEpisodeHistory();
-    let groupIdx = epHist.findIndex((g) => String(g.id) === id);
-    let group;
-    if (groupIdx > -1) {
-      group = epHist.splice(groupIdx, 1)[0];
-    } else {
-      group = {
-        id: id,
-        title: title,
-        type: "tv",
-        isAnime: Boolean(
-          showItem.isAnime || showItem.is_anime || id.startsWith("ani_"),
-        ),
-        episodes: [],
-      };
-    }
-    group.title = title;
-    group.episodes = (group.episodes || []).filter(
-      (e) =>
-        !(Number(e.s) === Number(season) && Number(e.e) === Number(episode)),
-    );
-    group.episodes.unshift({
-      s: parseInt(season, 10),
-      e: parseInt(episode, 10),
-      dispS: dispSeason,
-      dispE: dispEp,
-      hybridSeason: hybridSeason || null,
-      isSpecial: Boolean(isSpecialWatch),
-      title: cardTitle,
-      img: img,
-      runtime: epObj?.runtime || null,
-      date: date,
-      rating: epRatingVal,
-      desc: epObj?.overview || "",
-    });
-    epHist.unshift(group);
-    let totalEps = epHist.reduce(
-      (sum, g) => sum + (g.episodes ? g.episodes.length : 0),
-      0,
-    );
-    while (totalEps > 500 && epHist.length > 0) {
-      const oldestGroup = epHist[epHist.length - 1];
-      if (
-        !oldestGroup ||
-        !oldestGroup.episodes ||
-        oldestGroup.episodes.length === 0
-      ) {
-        epHist.pop();
-        continue;
-      }
-      oldestGroup.episodes.pop();
-      totalEps--;
-      if (oldestGroup.episodes.length === 0) epHist.pop();
-    }
-    this.setEpisodeHistory(epHist);
   },
   saveBrowsingHistory: function (item) {
     if (!item || !item.id) return;
@@ -2552,6 +2179,7 @@ Object.assign(app, {
     const clearBtn = this.$g("clear-mylist-btn");
     const watchedBtn = this.$g("mylist-watched-btn");
     const renameBtn = this.$g("mylist-rename-btn");
+    const bookmarkIoEl = this.$g("bookmark-io-actions");
     this.toggleRenameListInput(false);
 
     const targetList =
@@ -2659,6 +2287,8 @@ Object.assign(app, {
     if (titleEl) titleEl.innerText = cfg.title;
     if (watchedBtn) watchedBtn.style.display = cfg.watched;
     if (renameBtn) renameBtn.style.display = cfg.rename;
+    if (bookmarkIoEl)
+      bookmarkIoEl.style.display = mode === "bookmark" ? "inline-flex" : "none";
     if (clearBtn) clearBtn.style.display = cfg.clear ? "inline-flex" : "none";
 
     if (mode === "bookmark") {
@@ -2711,16 +2341,142 @@ Object.assign(app, {
     }
     this.hidePageReloadOverlay();
   },
-  renderCollageHtml: function (items, maxCount = 4) {
+  renderCollageHtml: function (items, layoutType = "hub") {
+    const maxCount = layoutType === "custom" ? 6 : 4;
     const list = (items || [])
-      .filter((i) => i && i.poster_path)
+      .filter((i) => i && (i.poster_path || i.backdrop_path))
       .slice(0, maxCount);
-    return list
-      .map(
-        (it) =>
-          `<div class="mylist-collage-item" style="background-image:url('${this.getImg(it.poster_path, "poster")}');"></div>`,
-      )
-      .join("");
+    const len = list.length;
+    const cache = this._collageBannerCache || {};
+    const h = [];
+    for (let idx = 0; idx < len; idx++) {
+      const it = list[idx];
+      const isBannerSlot =
+        (layoutType === "hub" && len === 2) ||
+        (layoutType === "hub" && len === 3 && idx === 2) ||
+        (layoutType === "custom" && len === 1 && idx === 0);
+      const mType =
+        it.media_type === "movie"
+          ? "movie"
+          : it.media_type === "tv"
+            ? "tv"
+            : it.title
+              ? "movie"
+              : "tv";
+      const cKey = mType + "_" + String(it.id);
+      let bgUrl = "";
+      let attrs = "";
+      if (isBannerSlot) {
+        bgUrl =
+          cache[cKey] ||
+          (it.backdrop_path
+            ? this.getImg(it.backdrop_path, "backdrop")
+            : this.getImg(it.poster_path, "poster"));
+        attrs =
+          ' data-banner-id="' +
+          String(it.id) +
+          '" data-banner-type="' +
+          mType +
+          '"';
+      } else {
+        bgUrl = this.getImg(it.poster_path || it.backdrop_path, "poster");
+      }
+      h.push(
+        '<div class="mylist-collage-item"' +
+          attrs +
+          '><img class="mylist-collage-img" src="' +
+          bgUrl +
+          '" alt="" loading="lazy" onload="requestAnimationFrame(() => this.classList.add(\'loaded\'))"></div>',
+      );
+    }
+    return h.join("");
+  },
+  crossfadeCollageSlot: function (el, url) {
+    if (!el || !el.isConnected || !url) return;
+    const oldImg = el.querySelector(".mylist-collage-img:not(.fade-out)");
+    if (oldImg && oldImg.getAttribute("src") === url) return;
+    const nextImg = document.createElement("img");
+    nextImg.className = "mylist-collage-img collage-img-top";
+    nextImg.alt = "";
+    nextImg.onload = () => {
+      if (!el.isConnected) return;
+      el.appendChild(nextImg);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          nextImg.classList.add("loaded");
+          if (oldImg) oldImg.classList.add("fade-out");
+        });
+      });
+      setTimeout(() => {
+        if (oldImg && oldImg.parentNode === el) oldImg.remove();
+        nextImg.classList.remove("collage-img-top");
+      }, 380);
+    };
+    nextImg.src = url;
+  },
+  applyCollageLayoutClass: function (collageEl, layoutType, count) {
+    if (!collageEl) return;
+    const classes = Array.from(collageEl.classList).filter(
+      (c) => c.startsWith("collage-hub-") || c.startsWith("collage-custom-"),
+    );
+    classes.forEach((c) => collageEl.classList.remove(c));
+    const maxC = layoutType === "custom" ? 6 : 4;
+    const n = Math.min(maxC, count || 0);
+    if (n > 0) collageEl.classList.add("collage-" + layoutType + "-" + n);
+  },
+  hydrateCollageBanners: function (rootEl) {
+    if (!rootEl) return;
+    if (!this._collageBannerCache) this._collageBannerCache = {};
+    const slots = rootEl.querySelectorAll(
+      ".mylist-collage-item[data-banner-id]",
+    );
+    slots.forEach((el) => {
+      const rawId = el.getAttribute("data-banner-id");
+      const mType = el.getAttribute("data-banner-type") || "movie";
+      if (!rawId) return;
+      const cKey = mType + "_" + rawId;
+      if (this._collageBannerCache[cKey]) {
+        this.crossfadeCollageSlot(el, this._collageBannerCache[cKey]);
+        return;
+      }
+      let tmdbId = rawId;
+      if (String(rawId).startsWith("ani_")) {
+        const rawAni = String(rawId).replace(/^ani_/, "");
+        const aniEntry =
+          (this.animeCache &&
+            (this.animeCache[rawId] || this.animeCache[rawAni])) ||
+          null;
+        tmdbId = aniEntry && aniEntry.tmdbId ? String(aniEntry.tmdbId) : "";
+      }
+      if (!tmdbId || !/^\d+$/.test(String(tmdbId))) return;
+      this.api("/" + mType + "/" + tmdbId + "/images", {
+        include_image_language: "en,null",
+      })
+        .then((res) => {
+          const list = res && Array.isArray(res.backdrops) ? res.backdrops : [];
+          if (list.length === 0) return;
+          const enBacks = list
+            .filter((b) => b && b.file_path && b.iso_639_1 === "en")
+            .sort(
+              (a, b) =>
+                (b.vote_average || 0) - (a.vote_average || 0) ||
+                (b.vote_count || 0) - (a.vote_count || 0),
+            );
+          const anyBacks = list
+            .filter((b) => b && b.file_path)
+            .sort(
+              (a, b) =>
+                (b.vote_average || 0) - (a.vote_average || 0) ||
+                (b.vote_count || 0) - (a.vote_count || 0),
+            );
+          const chosen = enBacks[0] || anyBacks[0];
+          if (!chosen || !chosen.file_path) return;
+          const url = this.getImg(chosen.file_path, "backdrop");
+          this._collageBannerCache[cKey] = url;
+          this.crossfadeCollageSlot(el, url);
+        })
+        .catch(() => {});
+    });
   },
   advanceMyListCollageSets: function () {
     this.myListCollageIdx = ((this.myListCollageIdx || 0) + 1) % 6;
@@ -2804,17 +2560,27 @@ Object.assign(app, {
       const bItems = bDedup.slice(0, 4);
       const bCard = bCollage.closest(".mylist-hub-card");
       if (bItems.length > 0) {
-        bCollage.innerHTML = this.renderCollageHtml(bItems);
+        this.applyCollageLayoutClass(bCollage, "hub", bItems.length);
+        bCollage.innerHTML = this.renderCollageHtml(bItems, "hub");
+        this.hydrateCollageBanners(bCollage);
         if (bCard) this.applyCardPosterBg(bCard, bItems[0].poster_path);
       } else {
+        this.applyCollageLayoutClass(bCollage, "hub", 0);
         bCollage.innerHTML = "";
         if (bCard) bCard.style.backgroundColor = "";
         this.getMyListPlaceholderUrls(0).then((urls) => {
           if (urls.length > 0 && Object.keys(this.myList || {}).length === 0) {
+            this.applyCollageLayoutClass(
+              bCollage,
+              "hub",
+              Math.min(4, urls.length),
+            );
             bCollage.innerHTML = urls
               .map(
                 (u) =>
-                  `<div class="mylist-collage-item" style="background-image:url('${u}');"></div>`,
+                  '<div class="mylist-collage-item"><img class="mylist-collage-img" src="' +
+                  u +
+                  '" alt="" loading="lazy" onload="requestAnimationFrame(() => this.classList.add(\'loaded\'))"></div>',
               )
               .join("");
           }
@@ -2861,17 +2627,27 @@ Object.assign(app, {
       }
       const cCard = cCollage.closest(".mylist-hub-card");
       if (cItems.length > 0) {
-        cCollage.innerHTML = this.renderCollageHtml(cItems);
+        this.applyCollageLayoutClass(cCollage, "hub", cItems.length);
+        cCollage.innerHTML = this.renderCollageHtml(cItems, "hub");
+        this.hydrateCollageBanners(cCollage);
         if (cCard) this.applyCardPosterBg(cCard, cItems[0].poster_path);
       } else {
+        this.applyCollageLayoutClass(cCollage, "hub", 0);
         cCollage.innerHTML = "";
         if (cCard) cCard.style.backgroundColor = "";
         this.getMyListPlaceholderUrls(1).then((urls) => {
           if (urls.length > 0 && cCollage.children.length === 0) {
+            this.applyCollageLayoutClass(
+              cCollage,
+              "hub",
+              Math.min(4, urls.length),
+            );
             cCollage.innerHTML = urls
               .map(
                 (u) =>
-                  `<div class="mylist-collage-item" style="background-image:url('${u}');"></div>`,
+                  '<div class="mylist-collage-item"><img class="mylist-collage-img" src="' +
+                  u +
+                  '" alt="" loading="lazy" onload="requestAnimationFrame(() => this.classList.add(\'loaded\'))"></div>',
               )
               .join("");
           }
@@ -2932,30 +2708,52 @@ Object.assign(app, {
     if (!grid) return;
     const watchedRaw = Object.values(this.watchedList || {});
     const watchedItems = this.sortByAddedAt(watchedRaw)
-      .filter((i) => i && i.poster_path)
-      .slice(0, 4);
+      .filter((i) => i && (i.poster_path || i.backdrop_path))
+      .slice(0, 6);
     const watchedCollage =
       watchedItems.length > 0
-        ? `<div class="mylist-card-collage">${this.renderCollageHtml(watchedItems)}</div><div class="mylist-card-overlay"></div>`
+        ? '<div class="mylist-card-collage collage-custom-' +
+          watchedItems.length +
+          '">' +
+          this.renderCollageHtml(watchedItems, "custom") +
+          '</div><div class="mylist-card-overlay"></div>'
         : "";
-    const watchedCard = `<div class="custom-list-card" onclick="app.navigate('markedaswatched')">${watchedCollage}<div class="custom-list-card-title">Watched</div></div>`;
+    const watchedCard =
+      '<div class="custom-list-card" onclick="app.navigate(\'markedaswatched\')">' +
+      watchedCollage +
+      '<div class="custom-list-card-title">Watched</div></div>';
     const customLists = this.customLists || [];
     const customItemsList = [];
     const customCards = customLists
       .map((cl) => {
         const rawItems = Object.values(cl.items || {});
         const items = this.sortByAddedAt(rawItems)
-          .filter((i) => i && i.poster_path)
-          .slice(0, 4);
+          .filter((i) => i && (i.poster_path || i.backdrop_path))
+          .slice(0, 6);
         customItemsList.push(items);
         const collageHtml =
           items.length > 0
-            ? `<div class="mylist-card-collage">${this.renderCollageHtml(items)}</div><div class="mylist-card-overlay"></div>`
+            ? '<div class="mylist-card-collage collage-custom-' +
+              items.length +
+              '">' +
+              this.renderCollageHtml(items, "custom") +
+              '</div><div class="mylist-card-overlay"></div>'
             : "";
-        return `<div class="custom-list-card" onclick="app.openMyListSub('custom_detail', '${cl.id}')">${collageHtml}<button type="button" class="custom-list-del-btn" onclick="event.stopPropagation();app.confirmDeleteCustomList('${cl.id}')" title="Delete List">&times;</button><div class="custom-list-card-title">${cl.name}</div></div>`;
+        return (
+          "<div class=\"custom-list-card\" onclick=\"app.openMyListSub('custom_detail', '" +
+          cl.id +
+          "')\">" +
+          collageHtml +
+          '<button type="button" class="custom-list-del-btn" onclick="event.stopPropagation();app.confirmDeleteCustomList(\'' +
+          cl.id +
+          '\')" title="Delete List">&times;</button><div class="custom-list-card-title">' +
+          this.escListHtml(cl.name) +
+          "</div></div>"
+        );
       })
       .join("");
     grid.innerHTML = watchedCard + customCards;
+    this.hydrateCollageBanners(grid);
     if (watchedItems.length > 0 && grid.children[0]) {
       this.applyCardPosterBg(grid.children[0], watchedItems[0].poster_path);
     }
@@ -4557,6 +4355,9 @@ ${actRow("Reset User Data", "Permanently erases all saved preferences, custom li
     h.push(
       '<div id="ep-cast-modal" class="custom-prompt-overlay" onclick="app.closeEpisodeCastModal(event)"><div class="person-ep-box ep-cast-box" onclick="event.stopPropagation()"><div class="pe-header epc-header"><div class="pe-header-info"><div id="epc-title" class="epc-title"></div></div><button type="button" class="sheet-close-btn pe-close-btn" onclick="app.closeEpisodeCastModal()">&times;</button></div><div class="pe-list-wrap"><div id="epc-loader" class="pe-loader-overlay" style="display:none;"><div class="dots-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div><div id="epc-list" class="pe-ep-list"></div></div></div></div>',
     );
+    h.push(
+      '<div class="custom-prompt-overlay" id="list-io-modal" onclick="app.closeListIoModal(event)" onwheel="event.stopPropagation()"><div class="customize-box list-io-box" onclick="event.stopPropagation()"><div class="customize-header"><div class="customize-title" id="list-io-title"></div><button type="button" class="sheet-close-btn" onclick="app.closeListIoModal()">&times;</button></div><div class="customize-body" id="list-io-body"></div><div class="list-io-footer" id="list-io-footer"></div></div></div>',
+    );
     mc.innerHTML = h.join("");
   },
   fetchShowMedia(movieData) {
@@ -4598,8 +4399,652 @@ ${actRow("Reset User Data", "Permanently erases all saved preferences, custom li
       if (btn) btn.classList.add("active");
     }
   },
+  escListHtml: function (str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  },
+  formatExportFilename: function (listName) {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const safe =
+      String(listName || "List")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "")
+        .replace(/\s+/g, "_") || "List";
+    return "SiteName_" + safe + "_" + yyyy + "-" + mm + "-" + dd + ".json";
+  },
+  serializeListItems: function (items) {
+    const out = [];
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it || !it.id) continue;
+      const sum = this.toCardSummary(it);
+      if (typeof it.addedAt === "number" && it.addedAt > 0)
+        sum.addedAt = it.addedAt;
+      out.push(sum);
+    }
+    return out;
+  },
+  buildListExportPayload: function (type, lists) {
+    return {
+      app: "SiteName",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      type: type,
+      lists: lists.map((l) => ({
+        name: l.name,
+        isWatched: Boolean(l.isWatched),
+        items: this.serializeListItems(l.items || []),
+      })),
+    };
+  },
+  downloadJsonFile: function (filename, payloadObj) {
+    const jsonStr = JSON.stringify(payloadObj, null, 2);
+    if (
+      window.AndroidBridge &&
+      typeof window.AndroidBridge.exportJsonFile === "function"
+    ) {
+      window.AndroidBridge.exportJsonFile(filename, jsonStr);
+      return;
+    }
+    try {
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this.showToast("Exported " + filename);
+    } catch (e) {
+      this.showToast("Failed to export file.");
+    }
+  },
+  triggerListImport: function (scope) {
+    this._pendingImportScope = scope || "bookmark";
+    if (
+      window.AndroidBridge &&
+      typeof window.AndroidBridge.importJsonFile === "function"
+    ) {
+      window.AndroidBridge.importJsonFile();
+      return;
+    }
+    const inp = this.$g("list-json-file-input");
+    if (!inp) return;
+    inp.value = "";
+    inp.click();
+  },
+  handleListFileSelected: function (inputEl) {
+    const file = inputEl && inputEl.files && inputEl.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.processImportedJsonText(
+        String(reader.result || ""),
+        this._pendingImportScope || "bookmark",
+      );
+    };
+    reader.onerror = () => {
+      this.showToast("Failed to read JSON file.");
+    };
+    reader.readAsText(file);
+  },
+  sanitizeImportedItems: function (arr) {
+    const out = [];
+    if (!Array.isArray(arr)) return out;
+    for (let i = 0; i < arr.length; i++) {
+      const raw = arr[i];
+      if (!raw || raw.id === undefined || raw.id === null || raw.id === "")
+        continue;
+      if (!raw.title && !raw.name) continue;
+      const sum = this.toCardSummary(raw);
+      if (typeof raw.addedAt === "number" && raw.addedAt > 0)
+        sum.addedAt = raw.addedAt;
+      out.push(sum);
+    }
+    return out;
+  },
+  parseImportedListData: function (rawText) {
+    let parsed = null;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch (e) {
+      return null;
+    }
+    const lists = [];
+    if (Array.isArray(parsed)) {
+      const items = this.sanitizeImportedItems(parsed);
+      if (items.length > 0)
+        lists.push({ name: "Imported List", isWatched: false, items: items });
+    } else if (parsed && Array.isArray(parsed.lists)) {
+      for (let i = 0; i < parsed.lists.length; i++) {
+        const entry = parsed.lists[i];
+        if (!entry || typeof entry !== "object") continue;
+        const items = this.sanitizeImportedItems(entry.items);
+        const name =
+          String(entry.name || "Imported List " + (i + 1))
+            .trim()
+            .slice(0, 40) || "Imported List " + (i + 1);
+        lists.push({
+          name: name,
+          isWatched:
+            Boolean(entry.isWatched) || name.toLowerCase() === "watched",
+          items: items,
+        });
+      }
+    } else if (parsed && Array.isArray(parsed.items)) {
+      const name =
+        String(parsed.name || "Imported List")
+          .trim()
+          .slice(0, 40) || "Imported List";
+      lists.push({
+        name: name,
+        isWatched:
+          Boolean(parsed.isWatched) || name.toLowerCase() === "watched",
+        items: this.sanitizeImportedItems(parsed.items),
+      });
+    }
+    if (lists.length === 0) return null;
+    const fileType =
+      parsed && typeof parsed.type === "string"
+        ? parsed.type.trim().toLowerCase()
+        : null;
+    return { type: fileType, lists: lists };
+  },
+  buildIncomingEqSet: function (incomingItems) {
+    const set = new Set();
+    for (let i = 0; i < incomingItems.length; i++) {
+      const it = incomingItems[i];
+      const eqIds = this.getEquivalentIds(it.id, it);
+      eqIds.forEach((eid) => set.add(String(eid)));
+    }
+    return set;
+  },
+  hasListConflict: function (existingMap, incomingItems) {
+    const entries = Object.values(existingMap || {}).filter(
+      (it) => it && it.id,
+    );
+    if (entries.length === 0) return false;
+    const incomingSet = this.buildIncomingEqSet(incomingItems);
+    for (let i = 0; i < entries.length; i++) {
+      const ex = entries[i];
+      const exEq = this.getEquivalentIds(ex.id, ex);
+      const matchesIncoming = Array.from(exEq).some((eid) =>
+        incomingSet.has(String(eid)),
+      );
+      if (!matchesIncoming) return true;
+    }
+    return false;
+  },
+  applyItemsToMap: function (existingMap, incomingItems, mode) {
+    const result = mode === "replace" ? {} : { ...(existingMap || {}) };
+    for (let i = 0; i < incomingItems.length; i++) {
+      const it = incomingItems[i];
+      if (!it || !it.id) continue;
+      const eqIds = this.getEquivalentIds(it.id, it);
+      eqIds.forEach((eid) => {
+        delete result[String(eid)];
+      });
+      const sum = this.toCardSummary(it);
+      sum.addedAt =
+        typeof it.addedAt === "number" && it.addedAt > 0
+          ? it.addedAt
+          : Date.now();
+      result[String(it.id)] = sum;
+    }
+    return result;
+  },
+  openListIoModal: function (titleText, bodyHtml, footerHtml) {
+    const modal = this.$g("list-io-modal");
+    const titleEl = this.$g("list-io-title");
+    const bodyEl = this.$g("list-io-body");
+    const footerEl = this.$g("list-io-footer");
+    if (!modal || !titleEl || !bodyEl || !footerEl) return;
+    titleEl.innerText = titleText || "";
+    bodyEl.innerHTML = bodyHtml || "";
+    footerEl.innerHTML = footerHtml || "";
+    modal.classList.add("active");
+    document.body.classList.add("modal-open");
+    if (!window.history.state || window.history.state.modal !== "list_io") {
+      window.history.pushState(
+        { modal: "list_io", view: this.currentView },
+        "",
+        window.location.href,
+      );
+    }
+  },
+  closeListIoModal: function (e = null, fromPop = false) {
+    if (e && e.target && e.target.id !== "list-io-modal") return;
+    const modal = this.$g("list-io-modal");
+    if (!modal || !modal.classList.contains("active")) return;
+    if (
+      !fromPop &&
+      window.history.state &&
+      window.history.state.modal === "list_io"
+    ) {
+      window.history.back();
+      return;
+    }
+    modal.classList.remove("active");
+    this.syncModalOpen();
+  },
+  exportBookmarkList: function () {
+    const items = this.sortByAddedAt(Object.values(this.myList || {}));
+    if (items.length === 0) {
+      this.showToast("Bookmark list is empty.");
+      return;
+    }
+    const filename = this.formatExportFilename("Bookmark");
+    const payload = this.buildListExportPayload("bookmark", [
+      { name: "Bookmark", isWatched: false, items: items },
+    ]);
+    this.downloadJsonFile(filename, payload);
+  },
+  openListIoNotice: function (titleText, msgText) {
+    const bodyHtml =
+      '<div class="list-io-conflict-note">' +
+      this.escListHtml(msgText) +
+      "</div>";
+    const footerHtml =
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.closeListIoModal()">OK</button>';
+    this.openListIoModal(titleText, bodyHtml, footerHtml);
+  },
+  processImportedJsonText: function (rawText, scope) {
+    if (!rawText) return;
+    const parsedData = this.parseImportedListData(rawText);
+    if (!parsedData) {
+      this.showToast("Invalid or empty JSON list file.");
+      return;
+    }
+    const targetScope = scope === "custom" ? "custom" : "bookmark";
+    if (parsedData.type !== targetScope) {
+      let errMsg = "";
+      if (targetScope === "bookmark") {
+        errMsg =
+          parsedData.type === "custom"
+            ? "This is a Custom List file, not a Bookmark file. Please import it on the Custom List page."
+            : "This is not a valid Bookmark file.";
+      } else {
+        errMsg =
+          parsedData.type === "bookmark"
+            ? "This is a Bookmark file, not a Custom List file. Please import it on the Bookmark page."
+            : "This is not a valid Custom List file.";
+      }
+      this.openListIoNotice("Wrong File Type", errMsg);
+      return;
+    }
+    const lists = parsedData.lists;
+    if (targetScope === "custom") {
+      this.openCustomImportModal(lists);
+      return;
+    }
+    const mergedItems = [];
+    const seenEq = new Set();
+    for (let i = 0; i < lists.length; i++) {
+      const items = lists[i].items || [];
+      for (let j = 0; j < items.length; j++) {
+        const it = items[j];
+        const eqIds = this.getEquivalentIds(it.id, it);
+        const already = Array.from(eqIds).some((eid) =>
+          seenEq.has(String(eid)),
+        );
+        if (!already) {
+          eqIds.forEach((eid) => seenEq.add(String(eid)));
+          mergedItems.push(it);
+        }
+      }
+    }
+    if (mergedItems.length === 0) {
+      this.showToast("No valid titles found in file.");
+      return;
+    }
+    const finishBookmarkImport = (mode) => {
+      this.myList = this.applyItemsToMap(this.myList, mergedItems, mode);
+      this.$storeSet("mySavedList", this.myList);
+      this.openMyListSub("bookmark", null, false);
+      this.renderMyListHub();
+      this.syncAllCardStars();
+      this.closeListIoModal();
+      this.showToast(
+        "Imported " +
+          mergedItems.length +
+          " title" +
+          (mergedItems.length === 1 ? "" : "s") +
+          " to Bookmark.",
+      );
+    };
+    if (this.hasListConflict(this.myList, mergedItems)) {
+      const curCount = Object.keys(this.myList || {}).length;
+      const msg =
+        "Your Bookmark currently has " +
+        curCount +
+        " title" +
+        (curCount === 1 ? "" : "s") +
+        " that differ from this file (" +
+        mergedItems.length +
+        " title" +
+        (mergedItems.length === 1 ? "" : "s") +
+        ").";
+      this.openListConflictModal(
+        "Import Bookmark",
+        msg,
+        () => finishBookmarkImport("merge"),
+        () => finishBookmarkImport("replace"),
+      );
+    } else {
+      finishBookmarkImport("replace");
+    }
+  },
+  openListConflictModal: function (titleText, noteText, onMerge, onReplace) {
+    this._listIoConflictMerge = onMerge;
+    this._listIoConflictReplace = onReplace;
+    const bodyHtml =
+      '<div class="list-io-conflict-note">' +
+      this.escListHtml(noteText) +
+      "</div>";
+    const footerHtml =
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.closeListIoModal()">Cancel</button>' +
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.runListIoConflict(\'merge\')">Merge</button>' +
+      '<button type="button" class="custom-prompt-btn confirm" style="padding:10px 18px;" onclick="app.runListIoConflict(\'replace\')">Replace</button>';
+    this.openListIoModal(titleText, bodyHtml, footerHtml);
+  },
+  runListIoConflict: function (mode) {
+    const fn =
+      mode === "merge"
+        ? this._listIoConflictMerge
+        : this._listIoConflictReplace;
+    this._listIoConflictMerge = null;
+    this._listIoConflictReplace = null;
+    if (typeof fn === "function") fn();
+  },
+  toggleListIoSelectAll: function (masterChk) {
+    const checked = Boolean(masterChk && masterChk.checked);
+    document
+      .querySelectorAll("#list-io-body .list-io-item-check")
+      .forEach((chk) => {
+        chk.checked = checked;
+      });
+  },
+  syncListIoSelectAll: function () {
+    const master = this.$g("list-io-select-all-chk");
+    if (!master) return;
+    const items = Array.from(
+      document.querySelectorAll("#list-io-body .list-io-item-check"),
+    );
+    master.checked = items.length > 0 && items.every((c) => c.checked);
+  },
+  toggleListIoRowClick: function (e, rowEl) {
+    if (e && e.target && e.target.tagName === "INPUT") return;
+    const chk = rowEl ? rowEl.querySelector(".list-io-item-check") : null;
+    if (chk) {
+      chk.checked = !chk.checked;
+      this.syncListIoSelectAll();
+    }
+  },
+  openCustomExportModal: function () {
+    const watchedItems = this.sortByAddedAt(
+      Object.values(this.watchedList || {}),
+    );
+    const exportables = [
+      {
+        key: "__watched__",
+        name: "Watched",
+        isWatched: true,
+        items: watchedItems,
+      },
+    ];
+    (this.customLists || []).forEach((cl) => {
+      exportables.push({
+        key: String(cl.id),
+        name: cl.name,
+        isWatched: false,
+        items: this.sortByAddedAt(Object.values(cl.items || {})),
+      });
+    });
+    const hasAnyTitles = exportables.some((l) => l.items.length > 0);
+    if (!hasAnyTitles) {
+      this.showToast("No titles found in Custom Lists or Watched.");
+      return;
+    }
+    this._listIoExportables = exportables;
+    const allChecked = exportables.every((l) => l.items.length > 0);
+    const h = [];
+    h.push('<div class="list-io-sub">Select lists to export as JSON.</div>');
+    h.push(
+      '<label class="list-io-select-all"><span class="list-io-row-left"><input type="checkbox" id="list-io-select-all-chk" class="list-io-check"' +
+        (allChecked ? " checked" : "") +
+        ' onchange="app.toggleListIoSelectAll(this)"><span>Select All</span></span><span class="list-io-count">' +
+        exportables.length +
+        " lists</span></label>",
+    );
+    h.push('<div class="list-io-list">');
+    for (let i = 0; i < exportables.length; i++) {
+      const l = exportables[i];
+      const chkAttr = l.items.length > 0 ? " checked" : "";
+      const cntLabel =
+        l.items.length + " title" + (l.items.length === 1 ? "" : "s");
+      h.push(
+        '<div class="list-io-row" onclick="app.toggleListIoRowClick(event, this)"><div class="list-io-row-left"><input type="checkbox" class="list-io-check list-io-item-check" data-io-idx="' +
+          i +
+          '"' +
+          chkAttr +
+          ' onchange="app.syncListIoSelectAll()"><span class="list-io-name">' +
+          this.escListHtml(l.name) +
+          '</span></div><div class="list-io-meta"><span class="list-io-count">' +
+          cntLabel +
+          "</span></div></div>",
+      );
+    }
+    h.push("</div>");
+    const footerHtml =
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.closeListIoModal()">Cancel</button>' +
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.confirmCustomExport()">Export</button>';
+    this.openListIoModal("Export Lists", h.join(""), footerHtml);
+  },
+  confirmCustomExport: function () {
+    const pool = this._listIoExportables || [];
+    const selected = [];
+    document
+      .querySelectorAll("#list-io-body .list-io-item-check:checked")
+      .forEach((chk) => {
+        const idx = parseInt(chk.getAttribute("data-io-idx"), 10);
+        if (!isNaN(idx) && pool[idx]) selected.push(pool[idx]);
+      });
+    if (selected.length === 0) {
+      this.showToast("Select at least one list to export.");
+      return;
+    }
+    const fname =
+      selected.length === 1
+        ? this.formatExportFilename(selected[0].name)
+        : this.formatExportFilename("CustomLists");
+    const payload = this.buildListExportPayload("custom", selected);
+    this.closeListIoModal();
+    this.downloadJsonFile(fname, payload);
+  },
+  findExistingCustomMatch: function (entry) {
+    const lower = String(entry.name || "")
+      .trim()
+      .toLowerCase();
+    if (entry.isWatched || lower === "watched")
+      return { isWatched: true, name: "Watched", map: this.watchedList || {} };
+    const existing = (this.customLists || []).find(
+      (cl) =>
+        String(cl.name || "")
+          .trim()
+          .toLowerCase() === lower,
+    );
+    if (existing)
+      return {
+        isWatched: false,
+        list: existing,
+        name: existing.name,
+        map: existing.items || {},
+      };
+    return null;
+  },
+  openCustomImportModal: function (lists) {
+    this._listIoImportables = lists;
+    const h = [];
+    h.push(
+      '<div class="list-io-sub">Select lists from this file to import.</div>',
+    );
+    h.push(
+      '<label class="list-io-select-all"><span class="list-io-row-left"><input type="checkbox" id="list-io-select-all-chk" class="list-io-check" checked onchange="app.toggleListIoSelectAll(this)"><span>Select All</span></span><span class="list-io-count">' +
+        lists.length +
+        " list" +
+        (lists.length === 1 ? "" : "s") +
+        "</span></label>",
+    );
+    h.push('<div class="list-io-list">');
+    for (let i = 0; i < lists.length; i++) {
+      const l = lists[i];
+      const match = this.findExistingCustomMatch(l);
+      const badgeHtml = match
+        ? '<span class="list-io-badge">Exists</span>'
+        : "";
+      const cntLabel =
+        (l.items ? l.items.length : 0) +
+        " title" +
+        (l.items && l.items.length === 1 ? "" : "s");
+      h.push(
+        '<div class="list-io-row" onclick="app.toggleListIoRowClick(event, this)"><div class="list-io-row-left"><input type="checkbox" class="list-io-check list-io-item-check" data-io-idx="' +
+          i +
+          '" checked onchange="app.syncListIoSelectAll()"><span class="list-io-name">' +
+          this.escListHtml(l.name) +
+          '</span></div><div class="list-io-meta">' +
+          badgeHtml +
+          '<span class="list-io-count">' +
+          cntLabel +
+          "</span></div></div>",
+      );
+    }
+    h.push("</div>");
+    const footerHtml =
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.closeListIoModal()">Cancel</button>' +
+      '<button type="button" class="btn-primary" style="padding:10px 18px;border-radius:10px;" onclick="app.confirmCustomImport()">Import</button>';
+    this.openListIoModal("Import Lists", h.join(""), footerHtml);
+  },
+  confirmCustomImport: function () {
+    const pool = this._listIoImportables || [];
+    const selected = [];
+    document
+      .querySelectorAll("#list-io-body .list-io-item-check:checked")
+      .forEach((chk) => {
+        const idx = parseInt(chk.getAttribute("data-io-idx"), 10);
+        if (!isNaN(idx) && pool[idx]) selected.push(pool[idx]);
+      });
+    if (selected.length === 0) {
+      this.showToast("Select at least one list to import.");
+      return;
+    }
+    const conflictingNames = [];
+    for (let i = 0; i < selected.length; i++) {
+      const match = this.findExistingCustomMatch(selected[i]);
+      if (match && this.hasListConflict(match.map, selected[i].items || [])) {
+        conflictingNames.push(match.name);
+      }
+    }
+    const executeImport = (mode) => {
+      if (!this.customLists) this.customLists = [];
+      let watchedChanged = false;
+      let totalTitles = 0;
+      for (let i = 0; i < selected.length; i++) {
+        const entry = selected[i];
+        const items = entry.items || [];
+        totalTitles += items.length;
+        const match = this.findExistingCustomMatch(entry);
+        if (match) {
+          if (match.isWatched) {
+            this.watchedList = this.applyItemsToMap(
+              this.watchedList,
+              items,
+              mode,
+            );
+            watchedChanged = true;
+          } else {
+            match.list.items = this.applyItemsToMap(
+              match.list.items,
+              items,
+              mode,
+            );
+          }
+        } else {
+          let cleanName =
+            String(entry.name || "Imported List")
+              .trim()
+              .slice(0, 40) || "Imported List";
+          const lower = cleanName.toLowerCase();
+          if (lower === "bookmark" || lower === "my list") {
+            cleanName = (cleanName + " (Imported)").slice(0, 40);
+          }
+          this.customLists.push({
+            id: "cl_" + Date.now() + "_" + i,
+            name: cleanName,
+            items: this.applyItemsToMap({}, items, "replace"),
+          });
+        }
+      }
+      if (watchedChanged) {
+        this.$storeSet("sh_watched_list", this.watchedList);
+        if (typeof this.updateWatchedBtnUI === "function" && this.currentShow)
+          this.updateWatchedBtnUI();
+      }
+      this.$storeSet("sh_custom_lists", this.customLists);
+      this.renderCustomListHub();
+      this.renderMyListHub();
+      this.syncAllCardStars();
+      this.closeListIoModal();
+      this.showToast(
+        "Imported " +
+          selected.length +
+          " list" +
+          (selected.length === 1 ? "" : "s") +
+          " (" +
+          totalTitles +
+          " titles).",
+      );
+    };
+    if (conflictingNames.length > 0) {
+      const msg =
+        "Existing list" +
+        (conflictingNames.length === 1 ? "" : "s") +
+        " (" +
+        conflictingNames.join(", ") +
+        ") differ from the imported file.";
+      this.openListConflictModal(
+        "Merge or Replace?",
+        msg,
+        () => executeImport("merge"),
+        () => executeImport("replace"),
+      );
+    } else {
+      executeImport("replace");
+    }
+  },
 });
 window.app = app;
+window.__androidImportResult = function (jsonStr) {
+  if (window.app && typeof window.app.processImportedJsonText === "function") {
+    window.app.processImportedJsonText(
+      jsonStr,
+      window.app._pendingImportScope || "bookmark",
+    );
+  }
+};
+window.__androidExportResult = function (ok, msg) {
+  if (window.app && typeof window.app.showToast === "function" && msg) {
+    window.app.showToast(msg);
+  }
+};
 window.app = app;
 document.addEventListener("DOMContentLoaded", () => {
   try {

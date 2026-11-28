@@ -519,7 +519,6 @@ Object.assign(app, {
       (this.currentShow &&
         (this.currentShow.media_type || this.currentShow.type)) ||
       "tv";
-    this.watchFromEpHistory = false;
     this.blockWatchOnBack = true;
     const isTv = Boolean(
       showType === "tv" ||
@@ -9308,30 +9307,6 @@ Object.assign(app, {
       document.body.classList.toggle("anti-spoiler-active", isList);
       if (grid) grid.classList.toggle("list-view", isList);
     }
-    const histBtn = this.$g("history-ep-view-toggle");
-    if (histBtn) {
-      let histMode = this.epHistoryViewMode || "grid";
-      if (histMode === "min") {
-        histBtn.innerHTML = GRID_VIEW_SVG;
-        histBtn.title = "Switch to Grid View";
-      } else if (histMode === "list") {
-        histBtn.innerHTML = MIN_VIEW_SVG;
-        histBtn.title = "Minimize All";
-      } else {
-        histBtn.innerHTML = LIST_VIEW_SVG;
-        histBtn.title = "Switch to List View";
-      }
-    }
-    const histContainer = this.$g("history-episodes-list");
-    if (histContainer) {
-      histContainer.classList.toggle(
-        "list-view",
-        this.epHistoryViewMode === "list" || this.epHistoryViewMode === "min",
-      );
-    }
-    if (this.currentView === "history" && this.historySub === "episodes") {
-      this.updateArrows();
-    }
   },
   setEpHeading: function (text) {
     const heading = this.$g("si-ep-heading");
@@ -10023,12 +9998,8 @@ Object.assign(app, {
     targetHybridSeason = null,
   ) {
     const currentWatchReqId = ++this.watchReqId || (this.watchReqId = 1);
+    this._lastWatchOpenTime = Date.now();
     this.blockWatchOnBack = false;
-    if (this.currentView === "history" && this.historySub === "episodes") {
-      this.watchFromEpHistory = true;
-    } else if (!this.autoNextTriggered && this.currentView !== "watch") {
-      this.watchFromEpHistory = false;
-    }
     this.startLoader();
     this.setActiveView("watch", null);
     this.checkTooltip();
@@ -10509,19 +10480,6 @@ Object.assign(app, {
             histEntry.last_hybrid_season = parseInt(targetHybridSeason, 10);
           this.setHistory(hist);
         }
-        this.saveEpisodeHistory(
-          this.currentShow,
-          this.watchState.season,
-          this.watchState.episode,
-          epObj,
-          activeSpecialEp,
-          isSpecialWatch,
-          cleanEpName || rawEpName,
-          cardSNum ||
-            (targetHybridSeason ? parseInt(targetHybridSeason, 10) : null),
-          dispSeason,
-          dispEp,
-        );
       }
       const sSel = this.$g("w-season-sel");
       const seasons = validWatchSeasons;
@@ -10676,6 +10634,157 @@ Object.assign(app, {
       this.updateIframeSrc();
     }, 50);
     this.stopLoader();
+  },
+  async syncWatchEpisodeFromIframe(newSeason, newEpisode, newAnimeEp = null) {
+    if (this.currentView !== "watch" || !this.watchState || !this.watchState.id)
+      return;
+    const type = this.watchState.type;
+    const isTv = type === "tv" || type === "series" || type === "show";
+    if (!isTv) return;
+    const sNum = parseInt(newSeason, 10);
+    const eNum = parseInt(newEpisode, 10);
+    if (isNaN(sNum) || sNum < 1 || isNaN(eNum) || eNum < 1) return;
+    if (
+      sNum === parseInt(this.watchState.season, 10) &&
+      eNum === parseInt(this.watchState.episode, 10)
+    )
+      return;
+    const id = this.watchState.id;
+    const syncKey = String(id) + "_" + sNum + "_" + eNum;
+    if (
+      this._lastIframeSyncKey === syncKey &&
+      Date.now() - (this._lastIframeSyncTime || 0) < 1500
+    )
+      return;
+    this._lastIframeSyncKey = syncKey;
+    this._lastIframeSyncTime = Date.now();
+    this.watchState.season = sNum;
+    this.watchState.episode = eNum;
+    if (this.watchState.isAnime) {
+      const parsedAniE =
+        newAnimeEp !== null && newAnimeEp !== undefined
+          ? parseInt(newAnimeEp, 10)
+          : NaN;
+      this.watchState.animeEp =
+        !isNaN(parsedAniE) && parsedAniE >= 1 ? parsedAniE : eNum;
+    }
+    this.showSeasons[id] = sNum;
+    this.$storeSet("showSeasons", this.showSeasons);
+    const sData = await this.fetchSeasonEpisodes(id, sNum).catch(() => null);
+    if (
+      this.currentView !== "watch" ||
+      !this.watchState ||
+      String(this.watchState.id) !== String(id) ||
+      parseInt(this.watchState.season, 10) !== sNum ||
+      parseInt(this.watchState.episode, 10) !== eNum
+    )
+      return;
+    const eps = sData && Array.isArray(sData.episodes) ? sData.episodes : [];
+    if (eps.length > 0) {
+      this.watchState.seasonEpList = eps.map((ep) => ep.episode_number);
+      this.watchState.epCount =
+        this.watchState.seasonEpList[this.watchState.seasonEpList.length - 1];
+    }
+    const epObj = eps.find((ep) => Number(ep.episode_number) === eNum) || null;
+    const rawEpName =
+      epObj &&
+      epObj.name &&
+      epObj.name.trim() &&
+      epObj.name.trim().toLowerCase() !== "unknown episode"
+        ? epObj.name.trim()
+        : "";
+    const title =
+      (this.currentShow && (this.currentShow.title || this.currentShow.name)) ||
+      "";
+    const sPad = String(sNum).padStart(2, "0");
+    const ePad = String(eNum).padStart(2, "0");
+    const epPrefix = "S" + sPad + "E" + ePad;
+    const headerText = rawEpName
+      ? title + " " + epPrefix + " " + rawEpName
+      : title + " " + epPrefix;
+    const wt = this.$g("w-title");
+    if (wt) {
+      wt.innerText = headerText;
+      wt.classList.toggle(
+        "is-long",
+        headerText.length > 55 && headerText.length <= 90,
+      );
+      wt.classList.toggle("is-extra-long", headerText.length > 90);
+    }
+    const sSel = this.$g("w-season-sel");
+    if (
+      sSel &&
+      Array.from(sSel.options).some((o) => o.value === String(sNum))
+    ) {
+      sSel.value = String(sNum);
+    }
+    const epSel = this.$g("w-ep-sel");
+    if (epSel && eps.length > 0) {
+      const h = [];
+      for (let i = 0; i < eps.length; i++) {
+        const ep = eps[i];
+        const n = ep.episode_number;
+        const cleanN =
+          ep.name &&
+          ep.name.trim() &&
+          ep.name.trim().toLowerCase() !== "unknown episode"
+            ? " - " + ep.name.trim()
+            : "";
+        const selAttr = n === eNum ? " selected" : "";
+        h.push(
+          '<option value="' +
+            n +
+            '"' +
+            selAttr +
+            ">Episode " +
+            n +
+            cleanN +
+            "</option>",
+        );
+      }
+      epSel.innerHTML = h.join("");
+    }
+    const prevBtn = this.$g("w-prev-btn");
+    const nextBtn = this.$g("w-next-btn");
+    const seasons = (
+      (this.currentShow && this.currentShow.seasons) ||
+      []
+    ).filter((s) => this.isSeasonAired(s));
+    const maxSeason =
+      seasons.length > 0
+        ? Math.max(...seasons.map((s) => s.season_number))
+        : sNum;
+    if (prevBtn) prevBtn.disabled = sNum <= 1 && eNum <= 1;
+    if (nextBtn)
+      nextBtn.disabled = sNum >= maxSeason && eNum >= this.watchState.epCount;
+    const hist = this.getHistory();
+    const histEntry = hist.find((x) => String(x.id) === String(id));
+    if (histEntry) {
+      histEntry.last_season = sNum;
+      histEntry.last_episode = eNum;
+      histEntry.last_disp_season = sNum;
+      histEntry.last_disp_ep = eNum;
+      histEntry.is_special = false;
+      if (rawEpName) histEntry.last_ep_name = rawEpName;
+      this.setHistory(hist);
+    }
+    document.title = headerText;
+    const url =
+      "?view=watch&type=" +
+      type +
+      "&id=" +
+      id +
+      "&season=" +
+      sNum +
+      "&episode=" +
+      eNum;
+    this.syncHistoryUrl(
+      { view: "watch", id: id, type: type, season: sNum, episode: eNum },
+      headerText,
+      url,
+      false,
+      true,
+    );
   },
   refreshPlayer: function () {
     window.location.reload();

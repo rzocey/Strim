@@ -1746,22 +1746,19 @@ Object.assign(app, {
         });
       }
       if (!malId) {
-        const malKey = this.getMalKey();
-        if (malKey) {
-          for (const qStr of searchQueries) {
-            try {
-              const malTarget = `https://api.myanimelist.net/v2/anime?q=${encodeURIComponent(qStr)}&limit=1`;
-              const mRes = await fetch(malTarget, {
-                headers: { "X-MAL-CLIENT-ID": malKey },
-              });
-              const mData = await mRes.json();
-              if (mData?.data?.[0]?.node?.id) {
-                malId = mData.data[0].node.id;
-                if (!aniId) aniId = malId;
-                break;
-              }
-            } catch (err) {}
-          }
+        for (const qStr of searchQueries) {
+          try {
+            const mRes = await fetch(
+              `https://api.myanimelist.net/v2/anime?q=${encodeURIComponent(qStr)}&limit=1`,
+              { headers: { "X-MAL-CLIENT-ID": this.getMalKey() } },
+            );
+            const mData = await mRes.json();
+            if (mData?.data?.[0]?.node?.id) {
+              malId = mData.data[0].node.id;
+              if (!aniId) aniId = malId;
+              break;
+            }
+          } catch (err) {}
         }
       }
       if (!isMovie && sNum > 1 && !aniId && !malId) {
@@ -3836,26 +3833,6 @@ Page(page: $page, perPage: $perPage) { ${pi}media(type: ANIME, isAdult: false, i
         ep: item.last_disp_ep,
         label: "S" + item.last_disp_season + " E" + item.last_disp_ep,
       };
-    }
-    if (typeof this.getEpisodeHistory === "function") {
-      const epHist = this.getEpisodeHistory();
-      const group = Array.isArray(epHist)
-        ? epHist.find((g) => String(g.id) === idStr)
-        : null;
-      const epHit =
-        group && Array.isArray(group.episodes)
-          ? group.episodes.find(
-              (ep) => Number(ep.s) === rawS && Number(ep.e) === rawE,
-            )
-          : null;
-      if (epHit && epHit.dispS && epHit.dispE) {
-        return {
-          isSpecial: false,
-          season: epHit.dispS,
-          ep: epHit.dispE,
-          label: "S" + epHit.dispS + " E" + epHit.dispE,
-        };
-      }
     }
     return {
       isSpecial: false,
